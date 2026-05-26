@@ -1,0 +1,43 @@
+{
+  "name": "gas-station-desktop",
+  "version": "1.0.0",
+  "description": "Gas Station Management System",
+  "main": "main.js",
+  "scripts": {
+    "dev":   "concurrently \"vite\" \"node ../backend/server.js\" \"electron .\"",
+    "build": "vite build && electron-builder --win"
+  },
+  "dependencies": {
+    "axios":            "^1.6.8",
+    "react":            "^18.2.0",
+    "react-dom":        "^18.2.0",
+    "react-router-dom": "^6.22.3",
+    "socket.io-client": "^4.7.4",
+    "recharts":         "^2.12.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "concurrently":         "^8.2.2",
+    "electron":             "^29.1.4",
+    "electron-builder":     "^24.13.3",
+    "vite":                 "^5.1.6"
+  },
+  "build": {
+    "appId":       "com.gasstation.app",
+    "productName": "محطة الوقود",
+    "directories": { "output": "release" },
+    "files": ["dist/**/*", "main.js", "preload.js"],
+    "extraResources": [
+      { "from": "../backend",           "to": "backend"           },
+      { "from": "../database/schema.sql","to": "database/schema.sql"}
+    ],
+    "win": { "target": "nsis" },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName":            "محطة الوقود",
+      "createDesktopShortcut":   true,
+      "createStartMenuShortcut": true
+    }
+  }
+}

@@ -1,0 +1,81 @@
+2026-05-25T10:22:57.590Z\nSqliteError: near " ": syntax error
+    at Database.prepare (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\better-sqlite3\lib\methods\wrappers.js:5:21)
+    at C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\routes\messages.js:61:19
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:149:13)
+    at authMiddleware (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\middleware\auth.js:14:5)
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\index.js:284:15\n2026-05-25T10:23:02.540Z\nSqliteError: near " ": syntax error
+    at Database.prepare (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\better-sqlite3\lib\methods\wrappers.js:5:21)
+    at C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\routes\messages.js:61:19
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:149:13)
+    at authMiddleware (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\middleware\auth.js:14:5)
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\index.js:284:15\n2026-05-25T10:23:06.096Z\nSqliteError: near " ": syntax error
+    at Database.prepare (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\better-sqlite3\lib\methods\wrappers.js:5:21)
+    at C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\routes\messages.js:93:19
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:149:13)
+    at authMiddleware (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\middleware\auth.js:14:5)
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\index.js:284:15\n2026-05-25T10:23:06.104Z\nSqliteError: near " ": syntax error
+    at Database.prepare (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\better-sqlite3\lib\methods\wrappers.js:5:21)
+    at C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\routes\sales.js:26:21
+    at sqliteTransaction (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\better-sqlite3\lib\methods\transaction.js:65:24)
+    at C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\routes\sales.js:38:18
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:149:13)
+    at authMiddleware (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\middleware\auth.js:14:5)
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:119:3)\n2026-05-25T10:23:07.507Z\nSqliteError: near " ": syntax error
+    at Database.prepare (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\better-sqlite3\lib\methods\wrappers.js:5:21)
+    at C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\routes\messages.js:61:19
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:149:13)
+    at authMiddleware (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\middleware\auth.js:14:5)
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\index.js:284:15\n2026-05-25T10:23:12.535Z\nSqliteError: near " ": syntax error
+    at Database.prepare (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\better-sqlite3\lib\methods\wrappers.js:5:21)
+    at C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\routes\messages.js:61:19
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:149:13)
+    at authMiddleware (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\middleware\auth.js:14:5)
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\index.js:284:15\n2026-05-25T10:23:17.556Z\nSqliteError: near " ": syntax error
+    at Database.prepare (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\better-sqlite3\lib\methods\wrappers.js:5:21)
+    at C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\routes\messages.js:61:19
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:149:13)
+    at authMiddleware (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\middleware\auth.js:14:5)
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\index.js:284:15\n2026-05-25T10:23:22.566Z\nSqliteError: near " ": syntax error
+    at Database.prepare (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\better-sqlite3\lib\methods\wrappers.js:5:21)
+    at C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\routes\messages.js:61:19
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:149:13)
+    at authMiddleware (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\middleware\auth.js:14:5)
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\سلمان تيليكوم\Desktop\Graduation-project\backend\node_modules\express\lib\router\index.js:284:15\n

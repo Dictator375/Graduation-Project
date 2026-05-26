@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "محطة الوقود",
+    "slug": "gas-station",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": false,
+    "splash": {
+      "backgroundColor": "#0f1117"
+    },
+    "android": {
+      "newArchEnabled": false,
+      "package": "com.gasstation.mobile"
+    },
+    "ios": {
+      "newArchEnabled": false,
+      "bundleIdentifier": "com.gasstation.mobile",
+      "supportsTablet": false
+    },
+    "plugins": [
+      "expo-asset"
+    ]
+  }
+}
