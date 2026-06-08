@@ -6,16 +6,23 @@ import {
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { useAuth } from '../../context/AuthContext';
-import { getInvoices, getInvoice, updateInvoiceStatus } from '../../utils/api';
+import { getThemeColors } from '../../utils/theme';
+import { getSales, getInvoices, generateInvoice, downloadInvoice } from '../../utils/api';
 import { STATUS_BAR_HEIGHT, rs, rp } from '../../utils/layout';
+import { ScreenHeader } from '../../utils/components';
 
 function fmt(n) { return Number(n || 0).toLocaleString('ar-DZ'); }
 
 const STATUS_COLOR = { pending: '#BA7517', paid: '#1D9E75', cancelled: '#E24B4A' };
-const STATUS_LABEL = { pending: 'معلق', paid: 'مدفوع', cancelled: 'ملغى' };
+const STATUS_LABEL = {
+   ar: { pending: 'معلق', paid: 'مدفوع', cancelled: 'ملغى' },
+   fr: { pending: 'En attente', paid: 'Payé', cancelled: 'Annulé' },
+};
 
 export default function AdminInvoices({ goBack }) {
-   const { t } = useAuth();
+   const { t, lang, theme } = useAuth();
+   const c = getThemeColors(theme || 'dark');
+   const s = getStyles(c);
    const [invoices, setInvoices] = useState([]);
    const [loading, setLoading] = useState(true);
    const [printing, setPrinting] = useState(null);
@@ -26,10 +33,10 @@ export default function AdminInvoices({ goBack }) {
    useEffect(() => { load(); }, []);
 
    async function handleStatus(id, status) {
-      const label = status === 'paid' ? 'مدفوع' : 'ملغى';
-      Alert.alert('تأكيد', `تغيير حالة الفاتورة إلى "${label}"؟`, [
-         { text: 'إلغاء', style: 'cancel' },
-         { text: 'تأكيد', onPress: async () => {
+      const label = status === 'paid' ? t.paid : t.cancelled;
+      Alert.alert(t.confirmation, t.changeStatusConfirm, [
+         { text: t.cancel, style: 'cancel' },
+         { text: t.confirm, onPress: async () => {
             await updateInvoiceStatus(id, status).catch(() => {});
             load();
          }},
@@ -43,7 +50,7 @@ export default function AdminInvoices({ goBack }) {
          const data = inv.data;
          const html = `
             <!DOCTYPE html>
-            <html dir="rtl">
+            <html dir="${lang === 'ar' ? 'rtl' : 'ltr'}">
             <head>
                <meta charset="UTF-8"/>
                <style>
@@ -69,68 +76,67 @@ export default function AdminInvoices({ goBack }) {
             <body>
                <div class="header">
                   <div class="logo"></div>
-                  <h1>فاتورة رسمية</h1>
+                  <h1>${t.officialInvoice}</h1>
                   <div class="inv-num">${data.invoice_number}</div>
                   <div class="status">${STATUS_LABEL[data.status] || data.status}</div>
                </div>
 
                <div class="info-grid">
                   <div class="info-box">
-                     <div class="info-label">صادرة إلى</div>
-                     <div class="info-val">${data.institution_name || 'عميل خاص'}</div>
+                     <div class="info-label">${t.issuedTo}</div>
+                     <div class="info-val">${data.institution_name || t.privateClient}</div>
                   </div>
                   <div class="info-box">
-                     <div class="info-label">تاريخ الإصدار</div>
-                     <div class="info-val">${new Date(data.created_at).toLocaleDateString('ar-DZ')}</div>
-                     ${data.due_date ? `<div class="info-label" style="margin-top:8px">تاريخ الاستحقاق</div><div class="info-val">${data.due_date}</div>` : ''}
+                     <div class="info-label">${t.issueDate}</div>
+                     <div class="info-val">${new Date(data.created_at).toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'fr-FR')}</div>
+                     ${data.due_date ? `<div class="info-label" style="margin-top:8px">${lang === 'fr' ? "Date d'échéance" : "تاريخ الاستحقاق"}</div><div class="info-val">${data.due_date}</div>` : ''}
                   </div>
                </div>
 
                <table>
-                  <thead><tr><th>نوع الوقود</th><th>الكميّة</th><th>السعر/L</th><th>المجموع</th></tr></thead>
+                  <thead><tr><th>${t.fuelType}</th><th>${t.quantity}</th><th>${t.unitPrice}</th><th>${t.subtotal}</th></tr></thead>
                   <tbody>
                      ${(data.items || []).map(item => `
                         <tr>
-                           <td>${item.fuel_name_ar}</td>
+                           <td>${lang === 'fr' ? (item.fuel_name_fr || item.fuel_name_ar) : item.fuel_name_ar}</td>
                            <td>${item.quantity_liters} L</td>
-                           <td>${item.price_per_liter} دج</td>
-                           <td>${fmt(item.subtotal)} دج</td>
+                           <td>${item.price_per_liter} ${t.currency}</td>
+                           <td>${fmt(item.subtotal)} ${t.currency}</td>
                         </tr>
                      `).join('')}
                   </tbody>
                </table>
 
                <div class="totals">
-                  <div class="total-row"><span>المبلغ الصافي</span><span>${fmt(data.net_amount)} دج</span></div>
-                  <div class="total-row"><span>الضريبة (${Math.round((data.tax_rate || 0.19) * 100)}%)</span><span>${fmt(data.tax_amount)} دج</span></div>
-                  <div class="total-row grand-total"><span>الإجمالي</span><span>${fmt(data.total_amount)} دج</span></div>
+                  <div class="total-row grand-total"><span>${t.invoiceTotal}</span><span>${fmt(data.total_amount)} ${t.currency}</span></div>
                </div>
 
-               <div class="footer">نظام إدارة محطة الوقود · ${new Date().toLocaleDateString('ar-DZ')}</div>
+               <div class="footer">${t.appName} · ${new Date().toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'fr-FR')}</div>
             </body>
             </html>
          `;
          const { uri } = await Print.printToFileAsync({ html });
-         await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'مشاركة الفاتورة' });
+         await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: t.shareInvoice });
       } catch (e) {
-         Alert.alert('خطأ', 'فشل إنشاء الفاتورة');
+         Alert.alert(t.errorTitle, t.invoiceCreateFailed);
       }
       setPrinting(null);
    }
 
    return (
       <View style={s.screen}>
-         <StatusBar backgroundColor="#1c2133" barStyle="light-content" />
-         <View style={s.safeTop} />
-         <View style={s.header}>
-            <TouchableOpacity onPress={goBack}><Text style={s.back}>‹ رجوع</Text></TouchableOpacity>
-            <Text style={s.title}>{t.invoices}</Text>
-         </View>
+         <ScreenHeader
+            title={t.invoices}
+            onBack={goBack}
+            lang={lang}
+            theme={theme}
+            c={c}
+         />
 
          {loading
             ? <View style={s.center}><ActivityIndicator color="#E85D24" /></View>
             : invoices.length === 0
-               ? <View style={s.center}><Text style={s.empty}>لا توجد فواتير</Text></View>
+               ? <View style={s.center}><Text style={s.empty}>{t.noInvoices}</Text></View>
                : (
                   <ScrollView contentContainerStyle={{ padding: rp(14), paddingBottom: rp(30) }}>
                      {invoices.map(inv => (
@@ -139,28 +145,28 @@ export default function AdminInvoices({ goBack }) {
                               <Text style={s.invNum}>{inv.invoice_number}</Text>
                               <View style={[s.statusBadge, { backgroundColor: (STATUS_COLOR[inv.status] || '#888') + '22' }]}>
                                  <Text style={[s.statusText, { color: STATUS_COLOR[inv.status] || '#888' }]}>
-                                    {STATUS_LABEL[inv.status]}
+                                    {(STATUS_LABEL[lang] || STATUS_LABEL.ar)[inv.status]}
                                  </Text>
                               </View>
                            </View>
-                           <Text style={s.instName}> {inv.institution_name || 'عميل خاص'}</Text>
+                           <Text style={s.instName}> {inv.institution_name || t.privateClient}</Text>
                            <View style={s.amountRow}>
-                              <Text style={s.amountLabel}>الإجمالي</Text>
-                              <Text style={s.amountVal}>{fmt(inv.total_amount)} دج</Text>
+                              <Text style={s.amountLabel}>{t.invoiceTotal}</Text>
+                              <Text style={s.amountVal}>{fmt(inv.total_amount)} {t.currency}</Text>
                            </View>
-                           <Text style={s.dateText}> {new Date(inv.created_at).toLocaleDateString('ar-DZ')}</Text>
+                           <Text style={s.dateText}> {new Date(inv.created_at).toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'fr-FR')}</Text>
 
                            <View style={s.actions}>
                               <TouchableOpacity style={s.printBtn} onPress={() => handlePrint(inv)} disabled={printing === inv.id}>
-                                 <Text style={s.printBtnText}>{printing === inv.id ? '...' : ' طباعة'}</Text>
+                                 <Text style={s.printBtnText}>{printing === inv.id ? '...' : `🖨 ${t.print}`}</Text>
                               </TouchableOpacity>
                               {inv.status === 'pending' && (
                                  <>
                                     <TouchableOpacity style={s.paidBtn} onPress={() => handleStatus(inv.id, 'paid')}>
-                                       <Text style={s.paidBtnText}>✓ مدفوع</Text>
+                                       <Text style={s.paidBtnText}>✓ {t.paid}</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity style={s.cancelBtn} onPress={() => handleStatus(inv.id, 'cancelled')}>
-                                       <Text style={s.cancelBtnText}>✕ إلغاء</Text>
+                                       <Text style={s.cancelBtnText}>✕ {t.cancel}</Text>
                                     </TouchableOpacity>
                                  </>
                               )}
@@ -174,24 +180,24 @@ export default function AdminInvoices({ goBack }) {
    );
 }
 
-const s = StyleSheet.create({
-   screen: { flex: 1, backgroundColor: '#0f1117' },
-   safeTop: { height: STATUS_BAR_HEIGHT, backgroundColor: '#1c2133' },
-   header: { backgroundColor: '#1c2133', padding: rp(14), flexDirection: 'row', alignItems: 'center', gap: rp(12), borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.07)' },
+const getStyles = (c) => StyleSheet.create({
+   screen: { flex: 1, backgroundColor: c.bg },
+   safeTop: { height: STATUS_BAR_HEIGHT, backgroundColor: c.card },
+   header: { backgroundColor: c.card, padding: rp(14), flexDirection: 'row', alignItems: 'center', gap: rp(12), borderBottomWidth: 1, borderBottomColor: c.border },
    back: { color: '#E85D24', fontSize: rs(16), fontWeight: '600' },
-   title: { color: '#eef0f6', fontSize: rs(16), fontWeight: '700', flex: 1, textAlign: 'right' },
+   title: { color: c.text, fontSize: rs(16), fontWeight: '700', flex: 1, textAlign: 'right' },
    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-   empty: { color: '#555e7a', fontSize: rs(14) },
-   card: { backgroundColor: '#1c2133', borderRadius: 12, padding: rp(14), marginBottom: rp(12), borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)' },
+   empty: { color: c.muted, fontSize: rs(14) },
+   card: { backgroundColor: c.card, borderRadius: 12, padding: rp(14), marginBottom: rp(12), borderWidth: 1, borderColor: c.border },
    cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: rp(6) },
    invNum: { color: '#E85D24', fontSize: rs(13), fontWeight: '700' },
    statusBadge: { paddingHorizontal: rp(10), paddingVertical: rp(3), borderRadius: 10 },
    statusText: { fontSize: rs(11), fontWeight: '700' },
-   instName: { color: '#eef0f6', fontSize: rs(14), fontWeight: '600', marginBottom: rp(8) },
+   instName: { color: c.text, fontSize: rs(14), fontWeight: '600', marginBottom: rp(8) },
    amountRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: rp(4) },
-   amountLabel: { color: '#8b92a9', fontSize: rs(12) },
-   amountVal: { color: '#eef0f6', fontSize: rs(16), fontWeight: '700' },
-   dateText: { color: '#8b92a9', fontSize: rs(11), marginBottom: rp(12) },
+   amountLabel: { color: c.sub, fontSize: rs(12) },
+   amountVal: { color: c.text, fontSize: rs(16), fontWeight: '700' },
+   dateText: { color: c.sub, fontSize: rs(11), marginBottom: rp(12) },
    actions: { flexDirection: 'row', gap: rp(8) },
    printBtn: { flex: 1, backgroundColor: 'rgba(74,144,226,0.15)', padding: rp(10), borderRadius: 8, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(74,144,226,0.3)' },
    printBtnText:{ color: '#4A90E2', fontSize: rs(12), fontWeight: '600' },

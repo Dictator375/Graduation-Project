@@ -18,7 +18,7 @@ export default function LoginScreen() {
 
   async function handleLogin() {
     if (!username.trim() || !password.trim()) {
-      Alert.alert('خطأ', 'أدخل اسم المستخدم وكلمة المرور');
+      Alert.alert(t.errorTitle, t.enterCredentials);
       return;
     }
     setLoading(true);
@@ -27,7 +27,7 @@ export default function LoginScreen() {
       setAuthToken(res.data.token);
       doLogin(res.data.token, res.data.user);
     } catch (err) {
-      Alert.alert('خطأ في تسجيل الدخول', err.response?.data?.error || 'تحقق من المعلومات المدخلة');
+      Alert.alert(t.loginError, err.response?.data?.error || t.checkCredentials);
     } finally { setLoading(false); }
   }
 
@@ -53,7 +53,7 @@ export default function LoginScreen() {
                 autoCorrect={false}
                 placeholderTextColor="#555e7a"
                 placeholder="admin"
-                textAlign="right"
+                textAlign={lang === 'fr' ? 'left' : 'right'}
               />
             </View>
             <View style={s.inputGroup}>
@@ -65,7 +65,7 @@ export default function LoginScreen() {
                 secureTextEntry
                 placeholderTextColor="#555e7a"
                 placeholder="••••••••"
-                textAlign="right"
+                textAlign={lang === 'fr' ? 'left' : 'right'}
               />
             </View>
             <TouchableOpacity style={s.btn} onPress={handleLogin} disabled={loading}>
@@ -77,7 +77,7 @@ export default function LoginScreen() {
           </View>
           <TouchableOpacity style={s.langBtn} onPress={toggleLang}>
             <Text style={s.langText}>
-              {lang === 'ar' ? '🇫🇷 Passer en Français' : '🇩🇿 التبديل للعربية'}
+              {lang === 'ar' ? t.switchToFr : t.switchToAr}
             </Text>
           </TouchableOpacity>
         </ScrollView>

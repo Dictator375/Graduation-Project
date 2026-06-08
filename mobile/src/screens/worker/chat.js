@@ -4,225 +4,257 @@ import {
   StyleSheet, KeyboardAvoidingView, Platform, StatusBar, ActivityIndicator,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { getThemeColors } from '../../utils/theme';
 import { getMessageUsers, getTeamMembers, getConversation, getBroadcast, sendMessage } from '../../utils/api';
-import { STATUS_BAR_HEIGHT, TAB_BAR_HEIGHT, rs, rp } from '../../utils/layout';
+import { STATUS_BAR_HEIGHT, rs, rp, width } from '../../utils/layout';
 
 const TABS = [
-  { key: 'broadcast', label: '📢 الكل', icon: '📢' },
-  { key: 'team', label: '👥 فريقي', icon: '👥' },
-  { key: 'direct', label: '💬 مباشر', icon: '💬' },
+  { key: 'broadcast', icon: '📢' },
+  { key: 'team',      icon: '👥' },
+  { key: 'direct',    icon: '💬' },
 ];
 
-export default function WorkerChat({ navigate }) {
-  const { user, t } = useAuth();
-  const [tab, setTab] = useState('broadcast');
-  const [users, setUsers] = useState([]);
-  const [team, setTeam] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [text, setText] = useState('');
-  const [loading, setLoading] = useState(false);
-  const flatRef = useRef(null);
+export default function WorkerChat({ navigate, goBack }) {
+  const { user, t, lang, theme } = useAuth();
+  const c = getThemeColors(theme || 'dark');
+  const [tab, setTab]               = useState('broadcast');
+  const [users, setUsers]           = useState([]);
+  const [team, setTeam]             = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [messages, setMessages]     = useState([]);
+  const [text, setText]             = useState('');
+  const [loading, setLoading]       = useState(false);
+  const flatListRef = useRef();
 
   useEffect(() => {
     getMessageUsers().then(r => setUsers(r.data || [])).catch(() => {});
-    getTeamMembers().then(r => setTeam(r.data || [])).catch(() => {});
+    getTeamMembers().then(r  => setTeam(r.data  || [])).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    loadMessages();
-    const iv = setInterval(loadMessages, 5000);
-    return () => clearInterval(iv);
-  }, [tab, selected]);
+  useEffect(() => { loadMessages(); }, [tab, selectedUser]);
 
   async function loadMessages() {
+    setLoading(true);
     try {
       if (tab === 'broadcast') {
-        const r = await getBroadcast();
-        setMessages(r.data || []);
-      } else if (tab === 'team' && selected) {
-        const r = await getConversation(selected.id);
-        setMessages(r.data || []);
-      } else if (tab === 'direct' && selected) {
-        const r = await getConversation(selected.id);
-        setMessages(r.data || []);
+        const res = await getBroadcast();
+        setMessages(res.data || []);
       } else {
-        setMessages([]);
+        if (!selectedUser) { setMessages([]); setLoading(false); return; }
+        const res = await getConversation(selectedUser.id);
+        setMessages(res.data || []);
       }
-    } catch {}
+    } catch (e) {}
+    setLoading(false);
   }
 
   async function handleSend() {
     if (!text.trim()) return;
-    const receiver = tab === 'broadcast' ? null : selected?.id || null;
-    await sendMessage({ receiver_id: receiver, content: text.trim() }).catch(() => {});
-    setText('');
-    loadMessages();
+    const receiverId = (tab !== 'broadcast' && selectedUser) ? selectedUser.id : null;
+    if (tab !== 'broadcast' && !receiverId) return;
+    try {
+      await sendMessage({ receiver_id: receiverId, content: text, is_broadcast: false });
+      setText('');
+      loadMessages();
+    } catch (e) {}
   }
 
-  const canChat = tab === 'broadcast' || !!selected;
-  const currentList = tab === 'team' ? team : users.filter(u => u.role !== 'manager');
+  const tabLabels = {
+    broadcast: t.sendToAll,
+    team:      t.teamChat,
+    direct:    t.directMessages,
+  };
+
+  // Can current user send in this tab?
+  const canSend = tab !== 'broadcast' && (selectedUser !== null);
+
+  const s = getStyles(c);
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.screen}>
-      <StatusBar backgroundColor="#1c2133" barStyle="light-content" />
+    <KeyboardAvoidingView style={s.screen} behavior={Platform.OS === 'ios' ? 'padding' : null}>
+      <StatusBar backgroundColor={c.statusBar} barStyle={theme === 'light' ? 'dark-content' : 'light-content'} />
       <View style={s.safeTop} />
 
-      {/* Navigation tabs */}
-      <View style={s.navBar}>
-        <TouchableOpacity style={s.navTab} onPress={() => navigate('home')}>
-          <Text style={s.navText}>�  {t.dashboard}</Text>
+      {/* Header */}
+      <View style={s.header}>
+        <TouchableOpacity onPress={goBack} style={s.backBtn}>
+          <Text style={s.backText}>‹</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={s.navTab} onPress={() => navigate('sales')}>
-          <Text style={s.navText}>⛽ {t.newSale}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={s.navTab} onPress={() => navigate('messages')}>
-          <Text style={s.navText}>📞 المدير</Text>
-        </TouchableOpacity>
-        <View style={[s.navTab, s.navActive]}>
-          <Text style={s.navActiveText}>💬 دردشة</Text>
-        </View>
+        <Text style={s.title}>{t.chat}</Text>
+        <View style={{ width: rp(40) }} />
       </View>
 
-      {/* Chat mode tabs */}
-      <View style={s.modeTabs}>
-        {TABS.map(tb => (
+      {/* Tab Bar */}
+      <View style={s.tabBar}>
+        {TABS.map(tItem => (
           <TouchableOpacity
-            key={tb.key}
-            style={[s.modeTab, tab === tb.key && s.modeTabActive]}
-            onPress={() => { setTab(tb.key); setSelected(null); setMessages([]); }}
+            key={tItem.key}
+            style={[s.tab, tab === tItem.key && s.tabActive]}
+            onPress={() => { setTab(tItem.key); setSelectedUser(null); }}
           >
-            <Text style={[s.modeTabText, tab === tb.key && s.modeTabTextActive]}>{tb.label}</Text>
+            <Text style={{ fontSize: rs(16) }}>{tItem.icon}</Text>
+            <Text style={[s.tabText, tab === tItem.key && s.tabTextActive]}>
+              {tabLabels[tItem.key]}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* User selector for team/direct */}
-      {(tab === 'team' || tab === 'direct') && !selected && (
+      {/* User picker for team/direct */}
+      {(tab === 'team' || tab === 'direct') && !selectedUser && (
         <FlatList
-          data={currentList}
-          keyExtractor={u => String(u.id)}
-          ListHeaderComponent={
-            <Text style={s.selectHeader}>
-              {tab === 'team' ? 'اختر زميلاً من فريقك' : 'اختر موظفاً للمحادثة'}
-            </Text>
-          }
+          data={tab === 'team' ? team : users}
+          keyExtractor={i => i.id.toString()}
+          contentContainerStyle={s.userList}
           ListEmptyComponent={
-            <Text style={s.empty}>
-              {tab === 'team' ? 'لا يوجد أعضاء في فريقك' : 'لا يوجد موظفون آخرون'}
-            </Text>
+            <View style={s.emptyWrap}>
+              <Text style={s.emptyText}>{t.noMembers}</Text>
+            </View>
           }
-          renderItem={({ item: u }) => (
-            <TouchableOpacity style={s.userRow} onPress={() => setSelected(u)}>
-              <View style={s.avatar}><Text style={{ fontSize: rs(18) }}>👤</Text></View>
-              <View style={{ flex: 1, marginHorizontal: rp(12) }}>
-                <Text style={s.userName}>{u.full_name_ar || u.full_name}</Text>
-                <Text style={s.userRole}>{t[u.role] || u.role}</Text>
+          renderItem={({ item }) => (
+            <TouchableOpacity style={s.userCard} onPress={() => setSelectedUser(item)}>
+              <View style={s.avatar}>
+                <Text style={s.avatarText}>{(lang === 'ar' ? (item.full_name_ar || item.full_name) : item.full_name)?.[0] || '?'}</Text>
               </View>
-              <Text style={{ color: '#E85D24', fontSize: rs(20) }}>›</Text>
+              <View style={{ flex: 1, marginLeft: rp(12) }}>
+                <Text style={s.userName}>{lang === 'ar' ? (item.full_name_ar || item.full_name) : item.full_name}</Text>
+                <Text style={s.userRole}>{t[item.role] || item.role}</Text>
+              </View>
+              <Text style={s.chevron}>›</Text>
             </TouchableOpacity>
           )}
         />
       )}
 
-      {/* Chat view */}
-      {(tab === 'broadcast' || selected) && (
-        <>
-          {/* Chat header */}
-          <View style={s.chatHeader}>
-            {selected && (
-              <TouchableOpacity onPress={() => { setSelected(null); setMessages([]); }}>
-                <Text style={s.backText}>‹</Text>
-              </TouchableOpacity>
-            )}
-            <Text style={s.chatTitle}>
-              {tab === 'broadcast' ? '📢 رسائل للجميع' :
-               tab === 'team' ? `👥 ${selected?.full_name_ar || selected?.full_name}` :
-               `💬 ${selected?.full_name_ar || selected?.full_name}`}
-            </Text>
+      {/* Selected user header */}
+      {(tab === 'team' || tab === 'direct') && selectedUser && (
+        <View style={s.chatHeader}>
+          <TouchableOpacity onPress={() => setSelectedUser(null)} style={s.backBtn}>
+            <Text style={s.backText}>‹</Text>
+          </TouchableOpacity>
+          <View style={s.chatAvatar}>
+            <Text style={s.chatAvatarText}>{(lang === 'ar' ? (selectedUser.full_name_ar || selectedUser.full_name) : selectedUser.full_name)?.[0] || '?'}</Text>
           </View>
+          <Text style={s.chatTarget}>{lang === 'ar' ? (selectedUser.full_name_ar || selectedUser.full_name) : selectedUser.full_name}</Text>
+        </View>
+      )}
 
-          <FlatList
-            ref={flatRef}
-            data={messages}
-            keyExtractor={m => String(m.id)}
-            onContentSizeChange={() => flatRef.current?.scrollToEnd({ animated: true })}
-            contentContainerStyle={{ padding: rp(12), paddingBottom: rp(8) }}
-            ListEmptyComponent={<Text style={s.empty}>لا توجد رسائل بعد — ابدأ المحادثة</Text>}
-            renderItem={({ item: msg }) => {
-              const isMe = msg.sender_id === user?.id;
-              return (
-                <View style={{ alignItems: isMe ? 'flex-start' : 'flex-end', marginBottom: rp(8) }}>
-                  <View style={[s.bubble, isMe ? s.myBubble : s.theirBubble]}>
-                    {!isMe && (
-                      <Text style={s.bubbleSender}>{msg.sender_name_ar || msg.sender_name}</Text>
-                    )}
-                    <Text style={{ color: isMe ? '#fff' : '#eef0f6', fontSize: rs(13), lineHeight: rs(20) }}>
-                      {msg.content}
-                    </Text>
-                    <Text style={s.bubbleTime}>
-                      {new Date(msg.created_at).toLocaleTimeString('ar-DZ', { hour: '2-digit', minute: '2-digit' })}
-                    </Text>
+      {/* Broadcast notice for non-managers */}
+      {tab === 'broadcast' && user?.role !== 'manager' && (
+        <View style={s.broadcastNotice}>
+          <Text style={s.broadcastNoticeText}>
+            {t.broadcastNotice}
+          </Text>
+        </View>
+      )}
+
+      {/* Messages list */}
+      {(tab === 'broadcast' || selectedUser) && (
+        <View style={{ flex: 1 }}>
+          {loading
+            ? <View style={s.center}><ActivityIndicator color="#E85D24" /></View>
+            : (
+              <FlatList
+                ref={flatListRef}
+                data={messages}
+                keyExtractor={m => m.id.toString()}
+                contentContainerStyle={s.messageList}
+                onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
+                ListEmptyComponent={
+                  <View style={s.emptyWrap}>
+                    <Text style={{ fontSize: rs(36), marginBottom: rp(8) }}>💬</Text>
+                    <Text style={s.emptyText}>{t.noMessages}</Text>
                   </View>
-                </View>
-              );
-            }}
-          />
+                }
+                renderItem={({ item }) => {
+                  const isMe = item.sender_id === user?.id;
+                  const date = new Date(item.created_at).toLocaleTimeString(lang === 'ar' ? 'ar-DZ' : 'fr-FR', { hour: '2-digit', minute: '2-digit' });
+                  return (
+                    <View style={[s.msgRow, { justifyContent: isMe ? 'flex-end' : 'flex-start' }]}>
+                      {!isMe && (
+                        <View style={s.msgAvatar}>
+                          <Text style={s.msgAvatarText}>
+                            {(lang === 'ar' ? (item.sender_name_ar || item.sender_name) : item.sender_name)?.[0] || '?'}
+                          </Text>
+                        </View>
+                      )}
+                      <View style={[s.msgBubble, isMe ? s.msgMe : s.msgOther, { maxWidth: width * 0.72 }]}>
+                        {!isMe && tab === 'broadcast' && (
+                          <Text style={s.msgSender}>{lang === 'ar' ? (item.sender_name_ar || item.sender_name) : item.sender_name}</Text>
+                        )}
+                        <Text style={[s.msgText, isMe && { color: '#fff' }]}>{item.content}</Text>
+                        <Text style={[s.msgTime, isMe && { color: 'rgba(255,255,255,0.65)' }]}>{date}</Text>
+                      </View>
+                    </View>
+                  );
+                }}
+              />
+            )
+          }
 
           {/* Input */}
-          <View style={s.inputRow}>
-            <TextInput
-              style={s.input}
-              value={text}
-              onChangeText={setText}
-              placeholder={t.typeMessage}
-              placeholderTextColor="#555e7a"
-              multiline
-              textAlign="right"
-            />
-            <TouchableOpacity
-              style={[s.sendBtn, !text.trim() && { opacity: 0.4 }]}
-              onPress={handleSend}
-              disabled={!text.trim()}
-            >
-              <Text style={s.sendText}>{t.send}</Text>
-            </TouchableOpacity>
-          </View>
-        </>
+          {canSend && (
+            <View style={s.inputArea}>
+              <TextInput
+                style={s.input}
+                value={text}
+                onChangeText={setText}
+                placeholder={t.typeMessage}
+                placeholderTextColor={c.muted}
+                multiline
+                textAlign={lang === 'ar' ? 'right' : 'left'}
+              />
+              <TouchableOpacity style={[s.sendBtn, !text.trim() && { opacity: 0.4 }]} onPress={handleSend} disabled={!text.trim()}>
+                <Text style={s.sendText}>➤</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
       )}
     </KeyboardAvoidingView>
   );
 }
 
-const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#0f1117' },
-  safeTop: { height: STATUS_BAR_HEIGHT, backgroundColor: '#1c2133' },
-  navBar: { flexDirection: 'row', backgroundColor: '#1c2133', borderBottomWidth: 2, borderBottomColor: '#E85D24', height: TAB_BAR_HEIGHT },
-  navTab: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 2 },
-  navActive: { borderBottomWidth: 3, borderBottomColor: '#E85D24', backgroundColor: 'rgba(232,93,36,0.12)' },
-  navText: { color: '#8b92a9', fontSize: rs(10), fontWeight: '500', textAlign: 'center' },
-  navActiveText: { color: '#E85D24', fontSize: rs(10), fontWeight: '700', textAlign: 'center' },
-  modeTabs: { flexDirection: 'row', backgroundColor: '#171b25', padding: rp(8), gap: rp(8) },
-  modeTab: { flex: 1, padding: rp(10), borderRadius: 10, alignItems: 'center', backgroundColor: '#1c2133', borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)' },
-  modeTabActive: { backgroundColor: '#E85D24', borderColor: '#E85D24' },
-  modeTabText: { color: '#8b92a9', fontSize: rs(12), fontWeight: '600' },
-  modeTabTextActive:{ color: '#fff', fontSize: rs(12), fontWeight: '700' },
-  selectHeader: { color: '#eef0f6', fontSize: rs(14), fontWeight: '600', padding: rp(16), textAlign: 'right' },
-  userRow: { flexDirection: 'row', alignItems: 'center', padding: rp(16), borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' },
-  avatar: { width: rp(42), height: rp(42), borderRadius: rp(21), backgroundColor: 'rgba(232,93,36,0.15)', justifyContent: 'center', alignItems: 'center' },
-  userName: { color: '#eef0f6', fontSize: rs(14), fontWeight: '600', textAlign: 'right' },
-  userRole: { color: '#8b92a9', fontSize: rs(12), textAlign: 'right', marginTop: 2 },
-  empty: { color: '#555e7a', textAlign: 'center', padding: rp(30), fontSize: rs(13) },
-  chatHeader: { flexDirection: 'row', alignItems: 'center', padding: rp(12), backgroundColor: '#1c2133', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.07)', gap: rp(10) },
-  backText: { color: '#E85D24', fontSize: rs(22), fontWeight: '700' },
-  chatTitle: { color: '#eef0f6', fontSize: rs(14), fontWeight: '700', flex: 1, textAlign: 'right' },
-  bubble: { maxWidth: '75%', padding: rp(12), borderRadius: 16 },
-  myBubble: { backgroundColor: '#E85D24', borderBottomRightRadius: 3 },
-  theirBubble: { backgroundColor: '#1c2133', borderBottomLeftRadius: 3 },
-  bubbleSender: { color: 'rgba(255,255,255,0.7)', fontSize: rs(10), marginBottom: 3, fontWeight: '700' },
-  bubbleTime: { color: 'rgba(255,255,255,0.45)', fontSize: rs(9), marginTop: 4, textAlign: 'left' },
-  inputRow: { flexDirection: 'row', padding: rp(12), borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.07)', backgroundColor: '#1c2133', gap: rp(8) },
-  input: { flex: 1, backgroundColor: '#0f1117', borderRadius: 12, padding: rp(12), color: '#eef0f6', fontSize: rs(13), maxHeight: rp(100), borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  sendBtn: { backgroundColor: '#E85D24', borderRadius: 12, paddingHorizontal: rp(18), justifyContent: 'center' },
-  sendText: { color: '#fff', fontWeight: '700', fontSize: rs(14) },
+const getStyles = (c) => StyleSheet.create({
+  screen:             { flex: 1, backgroundColor: c.bg },
+  safeTop:            { height: STATUS_BAR_HEIGHT, backgroundColor: c.statusBar },
+  header:             { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderBottomWidth: 1, borderBottomColor: c.border, paddingHorizontal: rp(8), paddingVertical: rp(12) },
+  backBtn:            { width: rp(40), height: rp(40), justifyContent: 'center', alignItems: 'center' },
+  backText:           { color: '#E85D24', fontSize: rs(26), fontWeight: '600', lineHeight: rs(30) },
+  title:              { flex: 1, textAlign: 'center', color: c.text, fontSize: rs(17), fontWeight: '700' },
+  tabBar:             { flexDirection: 'row', backgroundColor: c.card, borderBottomWidth: 1, borderBottomColor: c.border },
+  tab:                { flex: 1, paddingVertical: rp(10), alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent', gap: rp(3) },
+  tabActive:          { borderBottomColor: '#E85D24' },
+  tabText:            { color: c.sub, fontSize: rs(11), fontWeight: '500' },
+  tabTextActive:      { color: '#E85D24', fontWeight: '700' },
+  userList:           { padding: rp(14), paddingBottom: rp(30) },
+  userCard:           { flexDirection: 'row', alignItems: 'center', padding: rp(14), backgroundColor: c.card, borderRadius: 14, marginBottom: rp(8), borderWidth: 1, borderColor: c.border },
+  avatar:             { width: rp(44), height: rp(44), borderRadius: rp(22), backgroundColor: 'rgba(232,93,36,0.15)', justifyContent: 'center', alignItems: 'center' },
+  avatarText:         { color: '#E85D24', fontSize: rs(18), fontWeight: '700' },
+  userName:           { color: c.text, fontSize: rs(14), fontWeight: '600' },
+  userRole:           { color: c.sub, fontSize: rs(12), marginTop: 2 },
+  chevron:            { color: '#E85D24', fontSize: rs(20), fontWeight: '600' },
+  chatHeader:         { flexDirection: 'row', alignItems: 'center', paddingHorizontal: rp(8), paddingVertical: rp(10), backgroundColor: c.card, borderBottomWidth: 1, borderBottomColor: c.border, gap: rp(8) },
+  chatAvatar:         { width: rp(34), height: rp(34), borderRadius: rp(17), backgroundColor: 'rgba(232,93,36,0.15)', justifyContent: 'center', alignItems: 'center' },
+  chatAvatarText:     { color: '#E85D24', fontSize: rs(14), fontWeight: '700' },
+  chatTarget:         { color: c.text, fontSize: rs(15), fontWeight: '600', flex: 1 },
+  broadcastNotice:    { backgroundColor: 'rgba(232,93,36,0.08)', padding: rp(10), borderBottomWidth: 1, borderBottomColor: 'rgba(232,93,36,0.15)', alignItems: 'center' },
+  broadcastNoticeText:{ color: c.sub, fontSize: rs(12) },
+  center:             { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  messageList:        { padding: rp(14), paddingBottom: rp(10) },
+  emptyWrap:          { alignItems: 'center', paddingTop: rp(50) },
+  emptyText:          { color: c.muted, fontSize: rs(14) },
+  msgRow:             { flexDirection: 'row', alignItems: 'flex-end', marginBottom: rp(10) },
+  msgAvatar:          { width: rp(30), height: rp(30), borderRadius: rp(15), backgroundColor: 'rgba(232,93,36,0.12)', justifyContent: 'center', alignItems: 'center', marginRight: rp(6) },
+  msgAvatarText:      { color: '#E85D24', fontSize: rs(11), fontWeight: '700' },
+  msgBubble:          { padding: rp(10), borderRadius: 18 },
+  msgMe:              { backgroundColor: '#E85D24', borderBottomRightRadius: 4, alignSelf: 'flex-end' },
+  msgOther:           { backgroundColor: c.card, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: c.border },
+  msgSender:          { color: '#E85D24', fontSize: rs(11), fontWeight: '700', marginBottom: rp(3) },
+  msgText:            { color: c.text, fontSize: rs(14), lineHeight: rs(20) },
+  msgTime:            { color: c.muted, fontSize: rs(10), alignSelf: 'flex-end', marginTop: rp(4) },
+  inputArea:          { flexDirection: 'row', padding: rp(10), paddingBottom: Platform.OS === 'ios' ? rp(10) : rp(20), backgroundColor: c.card, borderTopWidth: 1, borderTopColor: c.border, alignItems: 'flex-end', gap: rp(8) },
+  input:              { flex: 1, backgroundColor: c.bg, borderRadius: 20, paddingHorizontal: rp(16), paddingTop: Platform.OS === 'ios' ? rp(12) : rp(8), paddingBottom: rp(10), color: c.text, fontSize: rs(14), borderWidth: 1, borderColor: c.border, minHeight: rp(44), maxHeight: rp(100), textAlignVertical: 'top' },
+  sendBtn:            { width: rp(44), height: rp(44), borderRadius: rp(22), backgroundColor: '#E85D24', justifyContent: 'center', alignItems: 'center', marginBottom: Platform.OS === 'ios' ? 0 : rp(2) },
+  sendText:           { color: '#fff', fontSize: rs(18) },
 });

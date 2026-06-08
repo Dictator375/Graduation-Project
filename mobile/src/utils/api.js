@@ -45,8 +45,15 @@ export const getSales = (params) => api.get('/sales', { params });
 export const getSale = (id) => api.get(`/sales/${id}`);
 export const createSale = (data) => api.post('/sales', data);
 export const getSalesSummary = (params) => api.get('/sales/summary', { params });
+export const getShiftSales = () => api.get('/sales/shift-summary');
+export const getEmployeeRanking = (params) => api.get('/sales/employee-ranking', { params });
 export const getCreditSales = () => api.get('/sales/credits');
 export const markCreditPaid = (id) => api.put(`/sales/${id}/pay`);
+
+// ── Pumps ─────────────────────────────────────────────────────
+export const getPumps = () => api.get('/pumps');
+export const createPump = (data) => api.post('/pumps', data);
+export const updatePump = (id, data) => api.put(`/pumps/${id}`, data);
 
 // ── Inventory ─────────────────────────────────────────────────
 export const getInventory = () => api.get('/inventory');
@@ -91,5 +98,8 @@ export const deleteInstitution= (id) => api.delete(`/institutions/${id}`);
 export const getPayroll = () => api.get('/payroll');
 export const createPayroll = (data) => api.post('/payroll', data);
 export const deletePayroll = (id) => api.delete(`/payroll/${id}`);
+// ── Credentials (manager only) ────────────────────────────────
+export const getCredentials = () => api.get('/auth/credentials');
+export const updateCredentials = (id, data) => api.put(`/auth/credentials/${id}`, data);
 
 export default api;

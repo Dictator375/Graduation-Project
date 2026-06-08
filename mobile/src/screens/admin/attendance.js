@@ -4,18 +4,23 @@ import {
    StatusBar, ActivityIndicator, Alert,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { getThemeColors } from '../../utils/theme';
 import { getEmployees, getAttendance, saveAttendance } from '../../utils/api';
 import { STATUS_BAR_HEIGHT, rs, rp } from '../../utils/layout';
-
-const STATUS_OPTIONS = [
-   { value: 'present', label: 'حاضر', color: '#1D9E75' },
-   { value: 'absent', label: 'غائب', color: '#E24B4A' },
-   { value: 'late', label: 'متأخر', color: '#BA7517' },
-   { value: 'excused', label: 'مبرر', color: '#4A90E2' },
-];
+import { ScreenHeader } from '../../utils/components';
 
 export default function AdminAttendance({ goBack }) {
-   const { t } = useAuth();
+   const { t, lang, theme } = useAuth();
+   const c = getThemeColors(theme || 'dark');
+   const s = getStyles(c);
+
+   const STATUS_OPTIONS = [
+      { value: 'present', label: t.present, color: '#1D9E75' },
+      { value: 'absent', label: t.absent, color: '#E24B4A' },
+      { value: 'late', label: t.late, color: '#BA7517' },
+      { value: 'excused', label: t.excused, color: '#4A90E2' },
+   ];
+
    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
    const [employees, setEmployees] = useState([]);
    const [attendance, setAttendance] = useState({});
@@ -51,7 +56,7 @@ export default function AdminAttendance({ goBack }) {
       }));
       await saveAttendance(records).catch(() => {});
       setSaving(false);
-      Alert.alert('✓', 'تم حفظ الحضور');
+      Alert.alert('✓', t.attendanceSaved);
    }
 
    const counts = { present: 0, absent: 0, late: 0, excused: 0 };
@@ -59,17 +64,18 @@ export default function AdminAttendance({ goBack }) {
 
    return (
       <View style={s.screen}>
-         <StatusBar backgroundColor="#1c2133" barStyle="light-content" />
-         <View style={s.safeTop} />
-         <View style={s.header}>
-            <TouchableOpacity onPress={goBack}><Text style={s.back}>‹ رجوع</Text></TouchableOpacity>
-            <Text style={s.title}>{t.attendance}</Text>
-         </View>
+         <ScreenHeader
+            title={t.attendance}
+            onBack={goBack}
+            lang={lang}
+            theme={theme}
+            c={c}
+         />
 
          {/* Date navigator */}
          <View style={s.dateBar}>
             <TouchableOpacity style={s.dateBtn} onPress={() => changeDate(1)}><Text style={s.dateBtnText}>›</Text></TouchableOpacity>
-            <Text style={s.dateText}>{new Date(date).toLocaleDateString('ar-DZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</Text>
+            <Text style={s.dateText}>{new Date(date).toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'fr-DZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</Text>
             <TouchableOpacity style={s.dateBtn} onPress={() => changeDate(-1)}><Text style={s.dateBtnText}>‹</Text></TouchableOpacity>
          </View>
 
@@ -92,7 +98,7 @@ export default function AdminAttendance({ goBack }) {
                      const statusOpt = STATUS_OPTIONS.find(o => o.value === status);
                      return (
                         <View key={emp.id} style={s.empCard}>
-                           <Text style={s.empName}>{emp.full_name_ar || emp.full_name}</Text>
+                           <Text style={s.empName}>{lang === 'fr' ? (emp.full_name_fr || emp.full_name) : (emp.full_name_ar || emp.full_name)}</Text>
                            <View style={s.statusRow}>
                               {STATUS_OPTIONS.map(opt => (
                                  <TouchableOpacity
@@ -116,33 +122,30 @@ export default function AdminAttendance({ goBack }) {
          {/* Save button */}
          <View style={s.saveWrap}>
             <TouchableOpacity style={s.saveBtn} onPress={handleSave} disabled={saving}>
-               <Text style={s.saveBtnText}>{saving ? 'جاري الحفظ...' : '✓ حفظ الحضور'}</Text>
+               <Text style={s.saveBtnText}>{saving ? t.saving : `✓ ${t.save}`}</Text>
             </TouchableOpacity>
          </View>
       </View>
    );
 }
 
-const s = StyleSheet.create({
-   screen: { flex: 1, backgroundColor: '#0f1117' },
-   safeTop: { height: STATUS_BAR_HEIGHT, backgroundColor: '#1c2133' },
-   header: { backgroundColor: '#1c2133', padding: rp(14), flexDirection: 'row', alignItems: 'center', gap: rp(12), borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.07)' },
-   back: { color: '#E85D24', fontSize: rs(16), fontWeight: '600' },
-   title: { color: '#eef0f6', fontSize: rs(16), fontWeight: '700', flex: 1, textAlign: 'right' },
-   dateBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: rp(12), backgroundColor: '#1c2133', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.07)' },
+const getStyles = (c) => StyleSheet.create({
+   screen: { flex: 1, backgroundColor: c.bg },
+   safeTop: { height: 0 },
+   dateBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: rp(12), backgroundColor: c.card, borderBottomWidth: 1, borderBottomColor: c.border },
    dateBtn: { padding: rp(8) },
    dateBtnText: { color: '#E85D24', fontSize: rs(20), fontWeight: '700' },
-   dateText: { color: '#eef0f6', fontSize: rs(13), fontWeight: '500', textAlign: 'center', flex: 1 },
-   summary: { flexDirection: 'row', backgroundColor: '#171b25', padding: rp(10) },
+   dateText: { color: c.text, fontSize: rs(13), fontWeight: '500', textAlign: 'center', flex: 1 },
+   summary: { flexDirection: 'row', backgroundColor: c.bg, padding: rp(10), borderBottomWidth: 1, borderBottomColor: c.border },
    summaryItem: { flex: 1, alignItems: 'center' },
    summaryCount: { fontSize: rs(20), fontWeight: '700' },
-   summaryLabel: { color: '#8b92a9', fontSize: rs(10), marginTop: 2 },
+   summaryLabel: { color: c.sub, fontSize: rs(10), marginTop: 2 },
    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-   empCard: { backgroundColor: '#1c2133', borderRadius: 12, padding: rp(14), marginBottom: rp(10), borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)' },
-   empName: { color: '#eef0f6', fontSize: rs(14), fontWeight: '600', textAlign: 'right', marginBottom: rp(10) },
+   empCard: { backgroundColor: c.card, borderRadius: 12, padding: rp(14), marginBottom: rp(10), borderWidth: 1, borderColor: c.border },
+   empName: { color: c.text, fontSize: rs(14), fontWeight: '600', textAlign: 'right', marginBottom: rp(10) },
    statusRow: { flexDirection: 'row', gap: rp(6) },
-   statusBtn: { flex: 1, padding: rp(8), borderRadius: 8, alignItems: 'center', backgroundColor: '#171b25', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-   statusBtnText:{ color: '#8b92a9', fontSize: rs(11), fontWeight: '600' },
+   statusBtn: { flex: 1, padding: rp(8), borderRadius: 8, alignItems: 'center', backgroundColor: c.bg, borderWidth: 1, borderColor: c.border },
+   statusBtnText:{ color: c.sub, fontSize: rs(11), fontWeight: '600' },
    saveWrap: { position: 'absolute', bottom: rp(16), left: rp(16), right: rp(16) },
    saveBtn: { backgroundColor: '#E85D24', borderRadius: 12, padding: rp(16), alignItems: 'center' },
    saveBtnText: { color: '#fff', fontSize: rs(15), fontWeight: '700' },
