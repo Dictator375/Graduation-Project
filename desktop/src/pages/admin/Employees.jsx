@@ -5,7 +5,7 @@ import { getEmployees, updateEmployee, deleteEmployee, getTeams } from '../../ut
 const ROLE_BADGE = { manager:'badge-accent', team_leader:'badge-info', worker:'badge-gray' };
 
 export default function AdminEmployees() {
-  const { t } = useAuth();
+  const { t, user } = useAuth();
   const [employees, setEmployees] = useState([]);
   const [teams,     setTeams]     = useState([]);
   const [search,    setSearch]    = useState('');
@@ -51,7 +51,9 @@ export default function AdminEmployees() {
           <table>
             <thead><tr>
               <th>{t.fullName}</th><th>{t.username}</th><th>الدور</th>
-              <th>{t.team}</th><th>{t.phone}</th><th>{t.salary}</th><th>{t.status}</th><th>{t.actions}</th>
+              <th>{t.team}</th><th>{t.phone}</th>
+              {user?.role === 'manager' && <th>{t.salary}</th>}
+              <th>{t.status}</th><th>{t.actions}</th>
             </tr></thead>
             <tbody>
               {filtered.length === 0
@@ -68,7 +70,7 @@ export default function AdminEmployees() {
                       <td><span className={`badge ${ROLE_BADGE[emp.role]||'badge-gray'}`}>{t[emp.role]||emp.role}</span></td>
                       <td style={{fontSize:12}}>{team?.name_ar || '—'}</td>
                       <td style={{fontSize:12}}>{emp.phone || '—'}</td>
-                      <td style={{fontSize:12}}>{emp.salary ? `${Number(emp.salary).toLocaleString()} دج` : '—'}</td>
+                      {user?.role === 'manager' && <td style={{fontSize:12}}>{emp.salary ? `${Number(emp.salary).toLocaleString()} دج` : '—'}</td>}
                       <td>
                         <span className={`badge ${emp.is_active ? 'badge-success' : 'badge-danger'}`}>
                           {emp.is_active ? t.active : t.inactive}
@@ -77,7 +79,7 @@ export default function AdminEmployees() {
                       <td>
                         <div style={{display:'flex',gap:5}}>
                           <button className="btn btn-ghost btn-sm" onClick={() => setEditing(emp)}>{t.edit}</button>
-                          {emp.is_active && (
+                          {emp.is_active && user?.role === 'manager' && (
                             <button className="btn btn-danger btn-sm" onClick={() => handleDeactivate(emp.id)}>{t.delete}</button>
                           )}
                         </div>
@@ -91,12 +93,12 @@ export default function AdminEmployees() {
       </div>
 
       {/* Edit modal */}
-      {editing && <EditModal emp={editing} teams={teams} t={t} onSave={handleSave} onClose={() => setEditing(null)} />}
+      {editing && <EditModal emp={editing} teams={teams} t={t} user={user} onSave={handleSave} onClose={() => setEditing(null)} />}
     </div>
   );
 }
 
-function EditModal({ emp, teams, t, onSave, onClose }) {
+function EditModal({ emp, teams, t, user, onSave, onClose }) {
   const [form, setForm] = useState({
     full_name: emp.full_name, full_name_ar: emp.full_name_ar||'',
     role: emp.role, team_id: emp.team_id||'', phone: emp.phone||'',
@@ -128,7 +130,9 @@ function EditModal({ emp, teams, t, onSave, onClose }) {
         </div>
         <div className="grid-2">
           <div className="form-group"><label>{t.phone}</label><input className="input" value={form.phone} onChange={e=>set('phone',e.target.value)}/></div>
-          <div className="form-group"><label>{t.salary} (دج)</label><input className="input" type="number" value={form.salary} onChange={e=>set('salary',e.target.value)}/></div>
+          {user?.role === 'manager' && (
+            <div className="form-group"><label>{t.salary} (دج)</label><input className="input" type="number" value={form.salary} onChange={e=>set('salary',e.target.value)}/></div>
+          )}
         </div>
         <div style={{display:'flex',gap:8,marginTop:8}}>
           <button className="btn btn-primary" style={{flex:1,justifyContent:'center'}} onClick={()=>onSave(emp.id,form)}>{t.save}</button>

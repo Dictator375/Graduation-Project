@@ -6,6 +6,7 @@
   --bg-secondary:  #171b25;
   --bg-card:       #1c2133;
   --bg-hover:      #222840;
+  --bg-track:      rgba(255,255,255,0.05);
   --accent:        #E85D24;
   --accent-muted:  rgba(232,93,36,0.13);
   --accent-hover:  #c94d1a;
@@ -28,6 +29,30 @@
 }
 
 html[dir="ltr"] { --font: 'Segoe UI', 'Cairo', sans-serif; }
+
+/* ── Light Theme ──────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg-primary:    #f5f6fa;
+  --bg-secondary:  #ffffff;
+  --bg-card:       #ffffff;
+  --bg-hover:      #f0f1f5;
+  --bg-track:      rgba(0,0,0,0.08);
+  --accent:        #E85D24;
+  --accent-muted:  rgba(232,93,36,0.10);
+  --accent-hover:  #c94d1a;
+  --success:       #1D9E75;
+  --warning:       #BA7517;
+  --danger:        #E24B4A;
+  --info:          #4A90E2;
+  --text-primary:  #1a1c24;
+  --text-secondary:#5a5f72;
+  --text-muted:    #8b92a9;
+  --border:        rgba(0,0,0,0.08);
+  --border-strong: rgba(0,0,0,0.14);
+  --shadow:        0 4px 24px rgba(0,0,0,0.08);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); }
 
 body {
   background:  var(--bg-primary);
@@ -213,7 +238,7 @@ tbody tr:hover { background: var(--bg-hover); }
 @keyframes slideUp { from { opacity:0; transform: translateX(-50%) translateY(10px); } }
 
 /* ── Fuel bar ─────────────────────────────────────────────── */
-.fuel-bar-track { height: 10px; background: var(--bg-secondary); border-radius: 5px; overflow: hidden; }
+.fuel-bar-track { height: 10px; background: var(--bg-track); border-radius: 5px; overflow: hidden; }
 .fuel-bar-fill  { height: 100%; border-radius: 5px; transition: width .6s ease; }
 
 /* ── Responsive ───────────────────────────────────────────── */

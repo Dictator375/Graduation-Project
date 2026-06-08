@@ -42,7 +42,7 @@ const CONSTANTS = {
   ],
 
   CURRENCY:   'دج',
-  PUMPS:      [1, 2, 3, 4, 5, 6, 7, 8],
+  VOUCHER_VALUES: [850, 1200],
   TAX_RATE:   0.19,
   LANGUAGES:  ['ar', 'fr'],
 };

@@ -55,6 +55,20 @@ const ar = {
   fuelTypeTitle: 'نوع الوقود', quantityTitle: 'الكميّة (L)', salesTitle: 'المبيعات (دج)', operationsTitle: 'العمليات',
   noSalesToday: 'لا توجد مبيعات اليوم', noSalesYet: 'لا توجد مبيعات بعد', noData: 'لا توجد بيانات',
   pumpStr: 'مضخة', hello: 'مرحباً،',
+
+  pumps: 'المضخات', pumpMonitoring: 'مراقبة المضخات',
+  demandDate: 'تاريخ الطلب', arrivalDate: 'تاريخ الوصول',
+  serviceStartDate: 'تاريخ دخول الخدمة', lastMaintenanceDate: 'تاريخ آخر صيانة',
+  maintenanceLog: 'سجل الصيانة', faultLog: 'سجل الأعطال',
+  inService: 'في الخدمة', outOfService: 'خارج الخدمة',
+  voucher: 'قسيمة', otherAmount: 'مبلغ آخر',
+  daily: 'يومي', weekly: 'أسبوعي', monthly: 'شهري', yearly: 'سنوي',
+  print: 'طباعة', employeeRanking: 'ترتيب الموظفين', rank: 'المرتبة',
+  shiftSales: 'مبيعات الفترات',
+  darkMode: 'الوضع الداكن', lightMode: 'الوضع الفاتح', theme: 'المظهر',
+  credentials: 'بيانات الدخول', newPasswordLabel: 'كلمة المرور الجديدة',
+  changeCredentials: 'تغيير بيانات الدخول', usernameLabel: 'اسم المستخدم',
+  overview: 'نظرة عامة', operations: 'العمليات', finance: 'المالية', other: 'أخرى',
 };
 
 const fr = {
@@ -109,6 +123,20 @@ const fr = {
   fuelTypeTitle: "Type de carburant", quantityTitle: "Quantité (L)", salesTitle: "Ventes (DA)", operationsTitle: "Transactions",
   noSalesToday: "Aucune vente aujourd'hui", noSalesYet: "Aucune vente pour le moment", noData: "Aucune donnée",
   pumpStr: "Pompe", hello: "Bonjour,",
+
+  pumps: 'Pompes', pumpMonitoring: 'Suivi des pompes',
+  demandDate: 'Date de demande', arrivalDate: "Date d'arrivée",
+  serviceStartDate: 'Date de mise en service', lastMaintenanceDate: 'Date de dernière maintenance',
+  maintenanceLog: 'Journal de maintenance', faultLog: 'Journal des pannes',
+  inService: 'En service', outOfService: 'Hors service',
+  voucher: "Bon d'achat", otherAmount: 'Autre montant',
+  daily: 'Quotidien', weekly: 'Hebdomadaire', monthly: 'Mensuel', yearly: 'Annuel',
+  print: 'Imprimer', employeeRanking: 'Classement des employés', rank: 'Rang',
+  shiftSales: 'Ventes par équipe',
+  darkMode: 'Mode sombre', lightMode: 'Mode clair', theme: 'Thème',
+  credentials: 'Identifiants', newPasswordLabel: 'Nouveau mot de passe',
+  changeCredentials: 'Modifier les identifiants', usernameLabel: "Nom d'utilisateur",
+  overview: 'Aperçu', operations: 'Opérations', finance: 'Finances', other: 'Autres',
 };
 
 const AuthContext  = createContext(null);
@@ -120,6 +148,7 @@ export function AuthProvider({ children }) {
   });
   const [token, setToken] = useState(() => localStorage.getItem('token') || null);
   const [lang,  setLang]  = useState(() => localStorage.getItem('lang') || 'ar');
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
 
   const t     = TRANSLATIONS[lang] || ar;
   const isRTL = lang === 'ar';
@@ -129,6 +158,11 @@ export function AuthProvider({ children }) {
     document.documentElement.dir  = isRTL ? 'rtl' : 'ltr';
     localStorage.setItem('lang', lang);
   }, [lang, isRTL]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
   function doLogin(tokenStr, userData) {
     localStorage.setItem('token', tokenStr);
@@ -148,10 +182,14 @@ export function AuthProvider({ children }) {
     setLang(l => l === 'ar' ? 'fr' : 'ar');
   }
 
+  function toggleTheme() {
+    setTheme(t => t === 'dark' ? 'light' : 'dark');
+  }
+
   return (
     <AuthContext.Provider value={{
       user, token, isLoggedIn: !!token,
-      doLogin, doLogout, lang, toggleLang, t, isRTL,
+      doLogin, doLogout, lang, toggleLang, t, isRTL, theme, toggleTheme,
     }}>
       {children}
     </AuthContext.Provider>

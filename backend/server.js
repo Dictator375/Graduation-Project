@@ -18,6 +18,8 @@ const invoicesRoutes     = require('./routes/invoices');
 const institutionsRoutes = require('./routes/institutions');
 const payrollRoutes      = require('./routes/payroll');
 
+const pumpsRoutes          = require('./routes/pumps');
+
 // ── Init database ────────────────────────────────────────────
 initDb();
 
@@ -39,6 +41,7 @@ app.use('/api/messages',     messagesRoutes);
 app.use('/api/invoices',     invoicesRoutes);
 app.use('/api/institutions', institutionsRoutes);
 app.use('/api/payroll',      payrollRoutes);
+app.use('/api/pumps',        pumpsRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {

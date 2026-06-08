@@ -21,7 +21,7 @@ router.get('/:id', auth, (req, res) => {
 });
 
 // POST /api/institutions  — manager only
-router.post('/', auth, rbac('manager'), (req, res) => {
+router.post('/', auth, rbac('manager', 'team_leader'), (req, res) => {
   const { name, contact_person, phone, address, tax_number, notes } = req.body;
   if (!name) return res.status(400).json({ error: 'Institution name required' });
   const db   = getDb();
@@ -33,7 +33,7 @@ router.post('/', auth, rbac('manager'), (req, res) => {
 });
 
 // PUT /api/institutions/:id  — manager only
-router.put('/:id', auth, rbac('manager'), (req, res) => {
+router.put('/:id', auth, rbac('manager', 'team_leader'), (req, res) => {
   const db = getDb();
   const { name, contact_person, phone, address, tax_number, notes, is_active } = req.body;
   db.prepare(`
@@ -47,8 +47,8 @@ router.put('/:id', auth, rbac('manager'), (req, res) => {
   res.json({ message: 'Institution updated' });
 });
 
-// DELETE /api/institutions/:id  — soft delete
-router.delete('/:id', auth, rbac('manager'), (req, res) => {
+// DELETE /api/institutions/:id  — manager only
+router.delete('/:id', auth, rbac('manager', 'team_leader'), (req, res) => {
   const db = getDb();
   db.prepare('UPDATE institutions SET is_active = 0 WHERE id = ?').run(parseInt(req.params.id));
   res.json({ message: 'Institution removed' });

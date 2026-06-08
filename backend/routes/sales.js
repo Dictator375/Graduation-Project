@@ -7,11 +7,17 @@ const router = express.Router();
 
 // POST /api/sales
 router.post('/', auth, (req, res) => {
-  const { fuel_type_id, quantity_liters, payment_method, institution_id, pump_number, notes } = req.body;
+  const { fuel_type_id, quantity_liters, payment_method, institution_id, pump_number, notes, voucher_amount } = req.body;
   if (!fuel_type_id || !quantity_liters || !payment_method || !pump_number)
     return res.status(400).json({ error: 'fuel_type_id, quantity_liters, payment_method and pump_number are required' });
 
   const db = getDb();
+
+  // Validate pump operational status
+  const pump = db.prepare('SELECT * FROM pumps WHERE pump_number = ?').get(pump_number);
+  if (pump && pump.status === 'out_of_service') {
+    return res.status(400).json({ error: 'Selected pump is out of service' });
+  }
   const fuel = db.prepare('SELECT * FROM fuel_types WHERE id = ? AND is_active = 1').get(fuel_type_id);
   if (!fuel) return res.status(404).json({ error: 'Fuel type not found' });
 
@@ -25,10 +31,11 @@ router.post('/', auth, (req, res) => {
   const txn = db.transaction(() => {
     const info = db.prepare(`
       INSERT INTO sales (worker_id, fuel_type_id, quantity_liters, price_per_liter, total_amount,
-        payment_method, institution_id, pump_number, shift_date, notes, credit_paid)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        payment_method, voucher_amount, institution_id, pump_number, shift_date, notes, credit_paid)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(req.user.id, fuel_type_id, quantity_liters, fuel.price_per_liter, total,
-        payment_method, institution_id || null, pump_number, today, notes || null,
+        payment_method, payment_method === 'loyalty' ? (voucher_amount || null) : null,
+        institution_id || null, pump_number, today, notes || null,
         payment_method === 'credit' ? 0 : 1);
     db.prepare('UPDATE inventory SET quantity_liters = quantity_liters - ?, updated_at = CURRENT_TIMESTAMP WHERE fuel_type_id = ?')
       .run(quantity_liters, fuel_type_id);
@@ -95,6 +102,58 @@ router.get('/summary', auth, rbac('manager', 'team_leader'), (req, res) => {
   res.json(rows);
 });
 
+// GET /api/sales/shift-summary
+router.get('/shift-summary', auth, rbac('manager', 'team_leader'), (req, res) => {
+  const db = getDb();
+  // Group by shift_date and team
+  const rows = db.prepare(`
+    SELECT s.shift_date as date, 
+           t.name as team_name, t.name_ar as team_name_ar,
+           SUM(s.quantity_liters) as total_liters, 
+           SUM(s.total_amount) as total_da, 
+           COUNT(*) as transactions
+    FROM sales s
+    JOIN users u ON u.id = s.worker_id
+    LEFT JOIN teams t ON t.id = u.team_id
+    GROUP BY s.shift_date, u.team_id
+    ORDER BY s.shift_date DESC
+    LIMIT 30
+  `).all();
+  res.json(rows);
+});
+
+// GET /api/sales/employee-ranking
+router.get('/employee-ranking', auth, rbac('manager', 'team_leader'), (req, res) => {
+  const db = getDb();
+  const { period = 'daily' } = req.query; // daily, weekly, monthly, annual
+
+  let dateFilter = '';
+  if (period === 'daily') {
+    dateFilter = "s.shift_date = date('now')";
+  } else if (period === 'weekly') {
+    dateFilter = "s.shift_date >= date('now', '-7 days')";
+  } else if (period === 'monthly') {
+    dateFilter = "s.shift_date >= date('now', 'start of month')";
+  } else if (period === 'annual') {
+    dateFilter = "s.shift_date >= date('now', 'start of year')";
+  } else {
+    dateFilter = "1=1";
+  }
+
+  const rows = db.prepare(`
+    SELECT u.id, u.full_name, u.full_name_ar, u.username,
+           SUM(s.total_amount) as total_sales_da, 
+           COUNT(*) as sales_count,
+           RANK() OVER (ORDER BY COUNT(*) DESC, SUM(s.total_amount) DESC) as rank
+    FROM sales s
+    JOIN users u ON u.id = s.worker_id
+    WHERE ${dateFilter}
+    GROUP BY u.id
+    ORDER BY rank ASC
+  `).all();
+  res.json(rows);
+});
+
 // GET /api/sales/credits — unpaid credit sales
 router.get('/credits', auth, rbac('manager', 'team_leader'), (req, res) => {
   const db = getDb();
@@ -112,7 +171,7 @@ router.get('/credits', auth, rbac('manager', 'team_leader'), (req, res) => {
 });
 
 // PUT /api/sales/:id/pay — mark credit as paid
-router.put('/:id/pay', auth, rbac('manager'), (req, res) => {
+router.put('/:id/pay', auth, rbac('manager', 'team_leader'), (req, res) => {
   const db = getDb();
   db.prepare(`
     UPDATE sales SET credit_paid = 1, credit_paid_at = CURRENT_TIMESTAMP

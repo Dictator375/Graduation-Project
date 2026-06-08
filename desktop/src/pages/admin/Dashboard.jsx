@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { getSalesSummary, getInventory, getEmployees } from '../../utils/api.js';
+import { getSalesSummary, getInventory, getEmployees, getShiftSales, getEmployeeRanking } from '../../utils/api.js';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 function fmt(n) { return Number(n||0).toLocaleString('ar-DZ'); }
@@ -11,6 +11,9 @@ export default function AdminDashboard() {
   const [monthly,   setMonthly]   = useState([]);
   const [inventory, setInventory] = useState([]);
   const [empCount,  setEmpCount]  = useState(0);
+  const [shiftSales, setShiftSales] = useState([]);
+  const [ranking,   setRanking]   = useState([]);
+  const [rankPeriod, setRankPeriod] = useState('daily');
   const [loading,   setLoading]   = useState(true);
 
   useEffect(() => {
@@ -21,13 +24,17 @@ export default function AdminDashboard() {
       getSalesSummary({ period:'monthly', date: today }),
       getInventory(),
       getEmployees(),
-    ]).then(([s, m, inv, emp]) => {
+      getShiftSales(),
+      getEmployeeRanking({ period: rankPeriod }),
+    ]).then(([s, m, inv, emp, shift, rnk]) => {
       setSummary(s.data);
       setMonthly(m.data);
       setInventory(inv.data);
       setEmpCount(emp.data.filter(e=>e.is_active).length);
+      setShiftSales(shift.data);
+      setRanking(rnk.data);
     }).finally(() => setLoading(false));
-  }, []);
+  }, [rankPeriod]);
 
   const todayTotal    = summary.reduce((s,r)=>s+r.total_da,     0);
   const todayLiters   = summary.reduce((s,r)=>s+r.total_liters, 0);
@@ -129,6 +136,60 @@ export default function AdminDashboard() {
               </table>
             </div>
           )}
+      </div>
+
+      <div className="grid-2" style={{ marginTop:20 }}>
+        {/* Shift Sales */}
+        <div className="card">
+          <div className="card-title">{t.shiftSales}</div>
+          {shiftSales.length === 0 ? <div className="empty">{t.noData}</div> : (
+            <div className="table-wrap" style={{maxHeight: 250, overflowY: 'auto'}}>
+              <table>
+                <thead><tr><th>{t.date}</th><th>{t.team}</th><th>{t.quantityTitle}</th><th>{t.salesTitle}</th></tr></thead>
+                <tbody>{shiftSales.map((row, idx)=>(
+                  <tr key={idx}>
+                    <td style={{fontSize:11, color:'var(--text-muted)'}}>{new Date(row.date).toLocaleDateString('ar-DZ')}</td>
+                    <td>{isRTL ? row.team_name_ar : row.team_name}</td>
+                    <td>{fmt(row.total_liters)}</td>
+                    <td style={{fontWeight:600}}>{fmt(row.total_da)}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Employee Ranking */}
+        <div className="card">
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:15}}>
+            <div className="card-title" style={{marginBottom:0}}>{t.employeeRanking}</div>
+            <select className="select" style={{padding:'2px 8px', fontSize:12}} value={rankPeriod} onChange={e=>setRankPeriod(e.target.value)}>
+              <option value="daily">{t.daily}</option>
+              <option value="weekly">{t.weekly}</option>
+              <option value="monthly">{t.monthly}</option>
+              <option value="annual">{t.yearly}</option>
+            </select>
+          </div>
+          {ranking.length === 0 ? <div className="empty">{t.noData}</div> : (
+            <div className="table-wrap" style={{maxHeight: 250, overflowY: 'auto'}}>
+              <table>
+                <thead><tr><th>{t.rank}</th><th>{t.fullName}</th><th>{t.salesTitle}</th><th>{t.operationsTitle}</th></tr></thead>
+                <tbody>{ranking.map(row=>(
+                  <tr key={row.id}>
+                    <td>
+                      <span className={`badge ${row.rank===1?'badge-success':row.rank===2?'badge-warning':row.rank===3?'badge-danger':''}`} style={{width: 24, justifyContent:'center'}}>
+                        {row.rank}
+                      </span>
+                    </td>
+                    <td>{isRTL ? (row.full_name_ar || row.full_name) : row.full_name}</td>
+                    <td style={{fontWeight:600}}>{fmt(row.total_sales_da)}</td>
+                    <td>{row.sales_count}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

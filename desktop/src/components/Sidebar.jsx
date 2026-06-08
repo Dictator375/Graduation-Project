@@ -2,34 +2,47 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const MANAGER_NAV = [
-  { section: 'نظرة عامة' },
-  { id: 'dashboard',    to: '/admin',              icon: '📊', label: 'لوحة التحكم'  },
-  { id: 'reports',      to: '/admin/sales',         icon: '📈', label: 'التقارير'     },
-  { section: 'العمليات' },
-  { id: 'fuel',         to: '/admin/inventory',     icon: '⛽', label: 'مخزون الوقود' },
-  { id: 'shifts',       to: '/admin/shifts',        icon: '📅', label: 'الفترات والحضور' },
-  { id: 'employees',    to: '/admin/employees',     icon: '👥', label: 'الموظفون'     },
-  { section: 'المالية' },
-  { id: 'invoices',     to: '/admin/invoices',      icon: '🧾', label: 'الفواتير'     },
-  { id: 'credits',      to: '/admin/credits',       icon: '💳', label: 'الديون'       },
-  { id: 'institutions', to: '/admin/institutions',  icon: '🏢', label: 'المؤسسات'    },
-  { section: 'أخرى' },
-  { id: 'messages',     to: '/admin/messages',      icon: '💬', label: 'الرسائل'      },
-  { id: 'payroll',      to: '/admin/payroll',       icon: '💰', label: 'مواعيد الرواتب' },
-  { id: 'register',     to: '/admin/register',      icon: '➕', label: 'تسجيل عامل'  },
+  { sectionKey: 'overview' },
+  { id: 'dashboard',    to: '/admin',              icon: '📊' },
+  { id: 'reports',      to: '/admin/sales',         icon: '📈' },
+  { sectionKey: 'operations' },
+  { id: 'inventory',    to: '/admin/inventory',     icon: '⛽' },
+  { id: 'pumps',        to: '/admin/pumps',         icon: '🚰' },
+  { id: 'shifts',       to: '/admin/shifts',        icon: '📅' },
+  { id: 'employees',    to: '/admin/employees',     icon: '👥' },
+  { sectionKey: 'finance' },
+  { id: 'invoices',     to: '/admin/invoices',      icon: '🧾' },
+  { id: 'credits',      to: '/admin/credits',       icon: '💳' },
+  { id: 'institutions', to: '/admin/institutions',  icon: '🏢' },
+  { sectionKey: 'other' },
+  { id: 'messages',     to: '/admin/messages',      icon: '💬' },
+  { id: 'payroll',      to: '/admin/payroll',       icon: '💰' },
+  { id: 'register',     to: '/admin/register',      icon: '➕' },
+  { id: 'credentials',  to: '/admin/credentials',   icon: '🔑' },
 ];
 
 const WORKER_NAV = [
-  { id: 'dashboard', to: '/worker',          icon: '🏠', label: 'لوحة التحكم' },
-  { id: 'sales',     to: '/worker/sales',    icon: '⛽', label: 'تسجيل بيع'   },
-  { id: 'messages',  to: '/worker/messages', icon: '💬', label: 'الرسائل'      },
+  { id: 'dashboard', to: '/worker',          icon: '🏠' },
+  { id: 'sales',     to: '/worker/sales',    icon: '⛽' },
+  { id: 'messages',  to: '/worker/messages', icon: '💬' },
 ];
 
+import { useState } from 'react';
 export default function Sidebar() {
-  const { user, doLogout, t, toggleLang, lang } = useAuth();
+  const { user, doLogout, t, toggleLang, lang, theme, toggleTheme } = useAuth();
   const navigate  = useNavigate();
-  const isManager = user?.role === 'manager' || user?.role === 'team_leader';
-  const navItems  = isManager ? MANAGER_NAV : WORKER_NAV;
+  const [showSettings, setShowSettings] = useState(false);
+  const isManager = user?.role === 'manager';
+  const isTeamLeader = user?.role === 'team_leader';
+  let navItems  = isManager || isTeamLeader ? [...MANAGER_NAV] : [...WORKER_NAV];
+  
+  if (isTeamLeader) {
+    navItems = navItems.filter(i => i.id !== 'register' && i.id !== 'payroll' && i.id !== 'employees');
+    const reportsIdx = navItems.findIndex(i => i.id === 'reports');
+    if (reportsIdx !== -1) {
+      navItems.splice(reportsIdx + 1, 0, { id: 'sales', to: '/admin/new-sale', icon: '⛽' });
+    }
+  }
 
   function handleLogout() { doLogout(); navigate('/'); }
 
@@ -54,11 +67,11 @@ export default function Sidebar() {
       {/* Nav */}
       <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto' }}>
         {navItems.map((item, idx) => {
-          if (item.section) return (
+          if (item.sectionKey) return (
             <div key={idx} style={{
               fontSize: 10, color: 'var(--text-muted)', padding: '10px 14px 4px',
               letterSpacing: '.04em', textTransform: 'uppercase',
-            }}>{item.section}</div>
+            }}>{t[item.sectionKey]}</div>
           );
           return (
             <NavLink
@@ -76,7 +89,7 @@ export default function Sidebar() {
               })}
             >
               <span style={{ fontSize: 16 }}>{item.icon}</span>
-              {item.label}
+              {t[item.id] || item.label}
             </NavLink>
           );
         })}
@@ -91,20 +104,39 @@ export default function Sidebar() {
           <span style={{ fontSize: 10 }}>{user?.username}</span>
         </div>
         <button
-          onClick={toggleLang}
+          onClick={() => setShowSettings(true)}
           className="btn btn-ghost btn-sm"
-          style={{ width: '100%', marginBottom: 6, justifyContent: 'center' }}
-        >
-          {lang === 'ar' ? '🇫🇷 Français' : '🇩🇿 العربية'}
-        </button>
-        <button
-          onClick={handleLogout}
-          className="btn btn-danger btn-sm"
           style={{ width: '100%', justifyContent: 'center' }}
         >
-          {t.logout}
+          ⚙️ {t.settings || 'الإعدادات'}
         </button>
       </div>
+
+      {showSettings && (
+        <div className="modal-overlay" onClick={() => setShowSettings(false)}>
+          <div className="modal" onClick={e=>e.stopPropagation()} style={{ width: 350 }}>
+            <div className="modal-title" style={{ textAlign: 'center' }}>⚙️ {t.settings || 'الإعدادات'}</div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button className="btn btn-ghost" style={{ justifyContent: 'space-between' }} onClick={toggleLang}>
+                <span>🌐 {t.language || 'اللغة'}</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{lang === 'ar' ? 'العربية' : 'Français'}</span>
+              </button>
+              
+              <button className="btn btn-ghost" style={{ justifyContent: 'space-between' }} onClick={toggleTheme}>
+                <span>{theme === 'dark' ? '🌙' : '☀️'} {t.theme || 'المظهر'}</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{theme === 'dark' ? (t.darkMode || 'داكن') : (t.lightMode || 'فاتح')}</span>
+              </button>
+
+              <div style={{ height: 1, background: 'var(--border)', margin: '10px 0' }} />
+
+              <button className="btn btn-danger" style={{ justifyContent: 'center' }} onClick={handleLogout}>
+                🚪 {t.logout}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }

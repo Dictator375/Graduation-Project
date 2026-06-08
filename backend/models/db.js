@@ -31,6 +31,10 @@ function initDb() {
   // Add credit payment columns (safe migration)
   try { database.exec('ALTER TABLE sales ADD COLUMN credit_paid INTEGER DEFAULT 0'); } catch(e) {}
   try { database.exec('ALTER TABLE sales ADD COLUMN credit_paid_at DATETIME'); } catch(e) {}
+  
+  // Add new feature columns (safe migration)
+  try { database.exec('ALTER TABLE refill_history ADD COLUMN demand_date DATETIME'); } catch(e) {}
+  try { database.exec('ALTER TABLE sales ADD COLUMN voucher_amount REAL'); } catch(e) {}
 
   // Seed teams
   const teamCount = database.prepare('SELECT COUNT(*) as c FROM teams').get();

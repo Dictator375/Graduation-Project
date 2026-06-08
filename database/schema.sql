@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS fuel_types (
 CREATE TABLE IF NOT EXISTS inventory (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
     fuel_type_id        INTEGER NOT NULL REFERENCES fuel_types(id),
+    capacity            REAL    NOT NULL DEFAULT 30000,
     quantity_liters     REAL    NOT NULL DEFAULT 0,
     low_threshold       REAL    NOT NULL DEFAULT 5000,
     last_refill_liters  REAL,
@@ -78,14 +79,17 @@ CREATE TABLE IF NOT EXISTS inventory (
     UNIQUE(fuel_type_id)
 );
 
--- ── Inventory refill history ─────────────────────────────────
 CREATE TABLE IF NOT EXISTS refill_history (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     fuel_type_id    INTEGER NOT NULL REFERENCES fuel_types(id),
     quantity_liters REAL    NOT NULL,
     cost_per_liter  REAL,
+    net_amount      REAL,
+    tax_rate        REAL    DEFAULT 0.19,
+    tax_amount      REAL,
     total_cost      REAL,
     supplier        TEXT,
+    demand_date     DATETIME,
     recorded_by     INTEGER REFERENCES users(id),
     refill_date     DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -112,6 +116,7 @@ CREATE TABLE IF NOT EXISTS sales (
     price_per_liter REAL    NOT NULL,
     total_amount    REAL    NOT NULL,    -- in DA
     payment_method  TEXT    NOT NULL CHECK(payment_method IN ('cash','card','loyalty','credit')),
+    voucher_amount  REAL,
     institution_id  INTEGER REFERENCES institutions(id),
     pump_number     INTEGER NOT NULL,
     shift_date      DATE    NOT NULL,
@@ -172,3 +177,16 @@ CREATE INDEX IF NOT EXISTS idx_attendance_user  ON attendance(user_id);
 CREATE INDEX IF NOT EXISTS idx_attendance_date  ON attendance(date);
 CREATE INDEX IF NOT EXISTS idx_messages_recv    ON messages(receiver_id);
 CREATE INDEX IF NOT EXISTS idx_messages_sender  ON messages(sender_id);
+
+-- ── Pumps ──────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS pumps (
+    id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+    pump_number           INTEGER NOT NULL UNIQUE,
+    uid                   TEXT,
+    status                TEXT DEFAULT 'in_service' CHECK(status IN ('in_service','out_of_service')),
+    service_start_date    DATE,
+    last_maintenance_date DATE,
+    maintenance_log       TEXT,
+    fault_log             TEXT,
+    created_at            DATETIME DEFAULT CURRENT_TIMESTAMP
+);

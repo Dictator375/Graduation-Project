@@ -22,7 +22,7 @@ router.get('/', auth, (req, res) => {
 });
 
 // POST /api/shifts  — manager only
-router.post('/', auth, rbac('manager'), (req, res) => {
+router.post('/', auth, rbac('manager', 'team_leader'), (req, res) => {
   const { name, name_ar, start_time, end_time, team_id, date } = req.body;
   if (!name || !start_time || !end_time || !date)
     return res.status(400).json({ error: 'name, start_time, end_time and date required' });
@@ -35,7 +35,7 @@ router.post('/', auth, rbac('manager'), (req, res) => {
 });
 
 // DELETE /api/shifts/:id  — manager only
-router.delete('/:id', auth, rbac('manager'), (req, res) => {
+router.delete('/:id', auth, rbac('manager', 'team_leader'), (req, res) => {
   const db = getDb();
   db.prepare('DELETE FROM shifts WHERE id = ?').run(parseInt(req.params.id));
   res.json({ message: 'Shift deleted' });

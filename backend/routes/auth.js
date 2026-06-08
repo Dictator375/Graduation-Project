@@ -75,4 +75,35 @@ router.get('/me', auth, (req, res) => {
   res.json(user);
 });
 
+// GET /api/auth/credentials  (manager only — view all user credentials)
+router.get('/credentials', auth, rbac('manager'), (req, res) => {
+  const db = getDb();
+  const rows = db.prepare('SELECT id, full_name, full_name_ar, username, role, is_active FROM users ORDER BY full_name').all();
+  res.json(rows);
+});
+
+// PUT /api/auth/credentials/:id  (manager only — update username/password)
+router.put('/credentials/:id', auth, rbac('manager'), (req, res) => {
+  const db = getDb();
+  const id = parseInt(req.params.id);
+  const { username, password } = req.body;
+
+  const user = db.prepare('SELECT id FROM users WHERE id = ?').get(id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  if (username) {
+    const existing = db.prepare('SELECT id FROM users WHERE username = ? AND id != ?').get(username, id);
+    if (existing) return res.status(409).json({ error: 'Username already taken' });
+    db.prepare('UPDATE users SET username = ? WHERE id = ?').run(username, id);
+  }
+
+  if (password) {
+    if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    const hash = bcrypt.hashSync(password, 10);
+    db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hash, id);
+  }
+
+  res.json({ message: 'Credentials updated successfully' });
+});
+
 module.exports = router;

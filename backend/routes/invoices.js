@@ -13,7 +13,7 @@ function generateInvoiceNumber(db) {
 }
 
 // GET /api/invoices  — manager only
-router.get('/', auth, rbac('manager'), (req, res) => {
+router.get('/', auth, rbac('manager', 'team_leader'), (req, res) => {
   const db   = getDb();
   const { status, institution_id } = req.query;
   let where  = '1=1';
@@ -33,7 +33,7 @@ router.get('/', auth, rbac('manager'), (req, res) => {
 });
 
 // GET /api/invoices/:id  — with line items
-router.get('/:id', auth, rbac('manager'), (req, res) => {
+router.get('/:id', auth, rbac('manager', 'team_leader'), (req, res) => {
   const db  = getDb();
   const inv = db.prepare(`
     SELECT i.*, inst.name as institution_name, u.full_name as created_by_name
@@ -55,15 +55,16 @@ router.get('/:id', auth, rbac('manager'), (req, res) => {
 });
 
 // POST /api/invoices  — manager only
-router.post('/', auth, rbac('manager'), (req, res) => {
-  const { institution_id, items, tax_rate = 0.19, due_date, notes } = req.body;
+router.post('/', auth, rbac('manager', 'team_leader'), (req, res) => {
+  const { institution_id, items, due_date, notes } = req.body;
   if (!items || items.length === 0)
     return res.status(400).json({ error: 'Invoice must have at least one item' });
 
   const db = getDb();
   const net_amount  = items.reduce((s, it) => s + (it.quantity_liters * it.price_per_liter), 0);
-  const tax_amount  = parseFloat((net_amount * tax_rate).toFixed(2));
-  const total_amount = parseFloat((net_amount + tax_amount).toFixed(2));
+  const tax_rate    = 0;
+  const tax_amount  = 0;
+  const total_amount = parseFloat(net_amount.toFixed(2));
   const inv_number  = generateInvoiceNumber(db);
 
   const create = db.transaction(() => {
@@ -86,7 +87,7 @@ router.post('/', auth, rbac('manager'), (req, res) => {
 });
 
 // PUT /api/invoices/:id/status  — mark paid or cancelled
-router.put('/:id/status', auth, rbac('manager'), (req, res) => {
+router.put('/:id/status', auth, rbac('manager', 'team_leader'), (req, res) => {
   const { status } = req.body;
   if (!['paid','cancelled','pending'].includes(status))
     return res.status(400).json({ error: 'Invalid status' });

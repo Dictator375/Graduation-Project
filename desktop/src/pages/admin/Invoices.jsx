@@ -79,8 +79,6 @@ async function printInvoice(id) {
           </tbody>
         </table>
         <div class="totals">
-          <div class="t-row"><span>المبلغ الصافي</span><span>${fmt(data.net_amount)} دج</span></div>
-          <div class="t-row"><span>الضريبة (${Math.round((data.tax_rate || 0.19)*100)}%)</span><span>${fmt(data.tax_amount)} دج</span></div>
           <div class="t-row t-grand"><span>الإجمالي</span><span>${fmt(data.total_amount)} دج</span></div>
         </div>
         ${data.notes ? `<p style="margin-top:16px;color:#666;font-size:13px"><b>ملاحظات:</b> ${data.notes}</p>` : ''}
@@ -145,8 +143,6 @@ export default function AdminInvoices() {
   }
 
   const totalLine = items.reduce((s, it) => s + (parseFloat(it.quantity_liters) || 0) * (parseFloat(it.price_per_liter) || 0), 0);
-  const tax       = totalLine * 0.19;
-  const grand     = totalLine + tax;
 
   if (loading) return <div className="loading"><div className="spinner" /></div>;
 
@@ -160,18 +156,16 @@ export default function AdminInvoices() {
         <div className="table-wrap">
           <table>
             <thead><tr>
-              <th>رقم الفاتورة</th><th>المؤسسة</th><th>المبلغ الصافي</th>
-              <th>الضريبة</th><th>الإجمالي</th><th>الحالة</th><th>التاريخ</th><th>الإجراءات</th>
+              <th>رقم الفاتورة</th><th>المؤسسة</th>
+              <th>الإجمالي</th><th>الحالة</th><th>التاريخ</th><th>الإجراءات</th>
             </tr></thead>
             <tbody>
               {invoices.length === 0
-                ? <tr><td colSpan={8} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>لا توجد فواتير</td></tr>
+                ? <tr><td colSpan={6} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>لا توجد فواتير</td></tr>
                 : invoices.map(inv => (
                   <tr key={inv.id}>
                     <td style={{ fontWeight: 600, fontSize: 12 }}>{inv.invoice_number}</td>
                     <td style={{ fontSize: 12 }}>{inv.institution_name || 'عميل خاص'}</td>
-                    <td style={{ fontSize: 12 }}>{fmt(inv.net_amount)} دج</td>
-                    <td style={{ fontSize: 12 }}>{fmt(inv.tax_amount)} دج</td>
                     <td style={{ fontWeight: 600 }}>{fmt(inv.total_amount)} دج</td>
                     <td><span className={`badge ${STATUS_STYLE[inv.status] || 'badge-gray'}`}>{STATUS_LABEL[inv.status]}</span></td>
                     <td style={{ fontSize: 11, color: 'var(--text-muted)' }}>{new Date(inv.created_at).toLocaleDateString('ar-DZ')}</td>
@@ -232,9 +226,7 @@ export default function AdminInvoices() {
 
               {/* Totals preview */}
               <div style={{ background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 14, fontSize: 13 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}><span>المبلغ الصافي</span><span>{fmt(totalLine)} دج</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, color: 'var(--text-secondary)' }}><span>الضريبة (19%)</span><span>{fmt(tax)} دج</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--accent)' }}><span>الإجمالي</span><span>{fmt(grand)} دج</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--accent)' }}><span>الإجمالي</span><span>{fmt(totalLine)} دج</span></div>
               </div>
 
               <div className="form-group">

@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { createSale, getFuelTypes, getInstitutions } from '../../utils/api.js';
+import { createSale, getFuelTypes, getInstitutions, getPumps } from '../../utils/api.js';
 
-const PUMPS = [1,2,3,4,5,6,7,8];
+const VOUCHER_VALUES = [850, 1200];
 
 export default function WorkerSales() {
   const { t } = useAuth();
   const [fuelTypes,    setFuelTypes]    = useState([]);
   const [institutions, setInstitutions] = useState([]);
+  const [pumps,        setPumps]        = useState([]);
   const [form, setForm] = useState({
     fuel_type_id:'', quantity_liters:'', payment_method:'cash',
-    pump_number:'', institution_id:'', notes:'',
+    pump_number:'', institution_id:'', notes:'', voucher_amount: ''
   });
+  const [isCustomVoucher, setIsCustomVoucher] = useState(false);
   const [result,   setResult]   = useState(null);
   const [error,    setError]    = useState('');
   const [loading,  setLoading]  = useState(false);
@@ -19,6 +21,7 @@ export default function WorkerSales() {
   useEffect(() => {
     getFuelTypes().then(r=>setFuelTypes(r.data));
     getInstitutions().then(r=>setInstitutions(r.data));
+    getPumps().then(r=>setPumps(r.data));
   }, []);
 
   const selectedFuel  = fuelTypes.find(f=>f.id===parseInt(form.fuel_type_id));
@@ -32,9 +35,12 @@ export default function WorkerSales() {
     e.preventDefault();
     setLoading(true); setError(''); setResult(null);
     try {
-      const res = await createSale(form);
+      const payload = { ...form };
+      if (payload.payment_method !== 'loyalty') delete payload.voucher_amount;
+      const res = await createSale(payload);
       setResult(res.data);
-      setForm({ fuel_type_id:'', quantity_liters:'', payment_method:'cash', pump_number:'', institution_id:'', notes:'' });
+      setForm({ fuel_type_id:'', quantity_liters:'', payment_method:'cash', pump_number:'', institution_id:'', notes:'', voucher_amount:'' });
+      setIsCustomVoucher(false);
     } catch(err) {
       setError(err.response?.data?.error || t.error);
     } finally { setLoading(false); }
@@ -84,15 +90,25 @@ export default function WorkerSales() {
           <div className="form-group">
             <label>{t.pumpNumber}</label>
             <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-              {PUMPS.map(p=>(
-                <button key={p} type="button"
-                  className={`btn btn-sm ${form.pump_number==p?'btn-primary':'btn-ghost'}`}
-                  onClick={()=>set('pump_number',p)}
-                  style={{width:42,justifyContent:'center'}}
-                >
-                  {p}
-                </button>
-              ))}
+              {pumps.map(p => {
+                const isOutOfService = p.status === 'out_of_service';
+                return (
+                  <button key={p.id} type="button"
+                    disabled={isOutOfService}
+                    className={`btn btn-sm ${form.pump_number==p.pump_number?'btn-primary':'btn-ghost'}`}
+                    onClick={()=>set('pump_number',p.pump_number)}
+                    style={{
+                      width:42,justifyContent:'center',
+                      opacity: isOutOfService ? 0.5 : 1,
+                      textDecoration: isOutOfService ? 'line-through' : 'none'
+                    }}
+                    title={isOutOfService ? t.outOfService : ''}
+                  >
+                    {p.pump_number}
+                  </button>
+                );
+              })}
+              {pumps.length === 0 && <span style={{fontSize:12, color:'var(--text-muted)'}}>{t.noData}</span>}
             </div>
           </div>
 
@@ -116,7 +132,7 @@ export default function WorkerSales() {
           <div className="form-group">
             <label>{t.paymentMethod}</label>
             <div style={{display:'flex',gap:8}}>
-              {[['cash','نقداً','💵'],['card','بطاقة','💳'],['loyalty','نقاط','⭐'],['credit','دين','🏢']].map(([v,l,icon])=>(
+              {[['cash','نقداً','💵'],['card','بطاقة','💳'],['loyalty','قسيمة','⭐'],['credit','دين','🏢']].map(([v,l,icon])=>(
                 <button key={v} type="button"
                   className={`btn btn-sm ${form.payment_method===v?'btn-primary':'btn-ghost'}`}
                   style={{flex:1,justifyContent:'center'}}
@@ -136,6 +152,36 @@ export default function WorkerSales() {
                 <option value="">— اختر المؤسسة —</option>
                 {institutions.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}
               </select>
+            </div>
+          )}
+
+          {/* Loyalty Vouchers */}
+          {form.payment_method==='loyalty' && (
+            <div className="form-group">
+              <label>قيمة القسيمة (Voucher Amount)</label>
+              <div style={{display:'flex', gap:8, marginBottom: 8}}>
+                {VOUCHER_VALUES.map(val => (
+                  <button key={val} type="button"
+                    className={`btn btn-sm ${!isCustomVoucher && form.voucher_amount == val ? 'btn-primary' : 'btn-ghost'}`}
+                    onClick={() => { setIsCustomVoucher(false); set('voucher_amount', val); }}
+                  >
+                    {val} دج
+                  </button>
+                ))}
+                <button type="button"
+                  className={`btn btn-sm ${isCustomVoucher ? 'btn-primary' : 'btn-ghost'}`}
+                  onClick={() => { setIsCustomVoucher(true); set('voucher_amount', ''); }}
+                >
+                  مخصص (Custom)
+                </button>
+              </div>
+              {isCustomVoucher && (
+                <input className="input" type="number" step="0.01" required
+                  placeholder="أدخل قيمة القسيمة"
+                  value={form.voucher_amount}
+                  onChange={e=>set('voucher_amount', e.target.value)}
+                />
+              )}
             </div>
           )}
 

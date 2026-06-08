@@ -120,18 +120,6 @@ export default function AdminReports() {
 
         <button className="btn btn-ghost btn-sm" onClick={load} style={{ marginRight: 'auto' }}>🔄 تحديث</button>
 
-        {/* Export CSV */}
-        <button className="btn btn-ghost btn-sm" onClick={() => {
-          const header = 'التاريخ,الوقود,الكميّة,السعر/L,المجموع,الدفع,العامل,المضخة,المؤسسة\n';
-          const rows = sales.map(s =>
-            `${s.shift_date},${s.fuel_name_ar},${s.quantity_liters},${s.price_per_liter},${s.total_amount},${s.payment_method},${s.worker_name},${s.pump_number},${s.institution_name || ''}`
-          ).join('\n');
-          const blob = new Blob(['\uFEFF' + header + rows], { type: 'text/csv;charset=utf-8;' });
-          const url  = URL.createObjectURL(blob);
-          const a    = document.createElement('a');
-          a.href = url; a.download = `sales_${from}_${to}.csv`; a.click();
-        }}>📥 تصدير CSV</button>
-
         {/* Print */}
         <button className="btn btn-primary btn-sm" onClick={() => printReport(sales, from, to, totalDA, totalL)}>
           🖨️ طباعة التقرير

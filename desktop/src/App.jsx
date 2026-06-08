@@ -11,12 +11,14 @@ import AdminDashboard    from './pages/admin/Dashboard.jsx';
 import AdminEmployees    from './pages/admin/Employees.jsx';
 import AdminShifts       from './pages/admin/Shifts.jsx';
 import AdminInventory    from './pages/admin/Inventory.jsx';
+import AdminPumps        from './pages/admin/Pumps.jsx';
 import AdminReports      from './pages/admin/Reports.jsx';
 import AdminMessages     from './pages/admin/Messages.jsx';
 import AdminPayroll      from './pages/admin/Payroll.jsx';
 import AdminInstitutions from './pages/admin/Institutions.jsx';
 import AdminInvoices     from './pages/admin/Invoices.jsx';
 import AdminCredits      from './pages/admin/Credits.jsx';
+import AdminCredentials  from './pages/admin/Credentials.jsx';
 
 // Worker pages
 import WorkerDashboard from './pages/worker/Dashboard.jsx';
@@ -49,13 +51,16 @@ export default function App() {
         <Route path="employees"    element={<AdminEmployees />} />
         <Route path="shifts"       element={<AdminShifts />} />
         <Route path="inventory"    element={<AdminInventory />} />
+        <Route path="pumps"        element={<AdminPumps />} />
         <Route path="sales"        element={<AdminReports />} />
+        <Route path="new-sale"     element={<WorkerSales />} />
         <Route path="invoices"     element={<AdminInvoices />} />
         <Route path="credits"      element={<AdminCredits />} />
         <Route path="institutions" element={<AdminInstitutions />} />
         <Route path="messages"     element={<AdminMessages />} />
-        <Route path="payroll"      element={<AdminPayroll />} />
-        <Route path="register"     element={<Register />} />
+        <Route path="payroll"      element={<PrivateRoute roles={['manager']}><AdminPayroll /></PrivateRoute>} />
+        <Route path="register"     element={<PrivateRoute roles={['manager']}><Register /></PrivateRoute>} />
+        <Route path="credentials"  element={<PrivateRoute roles={['manager']}><AdminCredentials /></PrivateRoute>} />
       </Route>
 
       {/* Worker routes */}
