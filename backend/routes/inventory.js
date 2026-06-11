@@ -26,7 +26,7 @@ router.get('/fuel-types', auth, (req, res) => {
 
 // POST /api/inventory/refill  — manager only
 router.post('/refill', auth, rbac('manager', 'team_leader'), (req, res) => {
-  const { fuel_type_id, quantity_liters, cost_per_liter, supplier, demand_date, tax_rate = 0.19 } = req.body;
+  const { fuel_type_id, quantity_liters, cost_per_liter, supplier_id, supplier, demand_date, tax_rate = 0.19 } = req.body;
   if (!fuel_type_id || !quantity_liters)
     return res.status(400).json({ error: 'fuel_type_id and quantity_liters required' });
 
@@ -69,9 +69,9 @@ router.post('/refill', auth, rbac('manager', 'team_leader'), (req, res) => {
     `).run(quantity_liters, quantity_liters, fuel_type_id);
 
     db.prepare(`
-      INSERT INTO refill_history (fuel_type_id, quantity_liters, cost_per_liter, net_amount, tax_rate, tax_amount, total_cost, supplier, demand_date, recorded_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(fuel_type_id, quantity_liters, cost_per_liter || null, net_amount, tax_rate, tax_amount, total_cost, supplier || null, demand_date || null, req.user.id);
+      INSERT INTO refill_history (fuel_type_id, quantity_liters, cost_per_liter, net_amount, tax_rate, tax_amount, total_cost, supplier_id, supplier, demand_date, recorded_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(fuel_type_id, quantity_liters, cost_per_liter || null, net_amount, tax_rate, tax_amount, total_cost, supplier_id || null, supplier || null, demand_date || null, req.user.id);
   });
 
   doRefill();

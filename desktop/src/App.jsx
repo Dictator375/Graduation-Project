@@ -15,6 +15,7 @@ import AdminPumps        from './pages/admin/Pumps.jsx';
 import AdminReports      from './pages/admin/Reports.jsx';
 import AdminMessages     from './pages/admin/Messages.jsx';
 import AdminPayroll      from './pages/admin/Payroll.jsx';
+import AdminSuppliers    from './pages/admin/Suppliers.jsx';
 import AdminInstitutions from './pages/admin/Institutions.jsx';
 import AdminInvoices     from './pages/admin/Invoices.jsx';
 import AdminCredits      from './pages/admin/Credits.jsx';
@@ -56,8 +57,9 @@ export default function App() {
         <Route path="new-sale"     element={<WorkerSales />} />
         <Route path="invoices"     element={<AdminInvoices />} />
         <Route path="credits"      element={<AdminCredits />} />
-        <Route path="institutions" element={<AdminInstitutions />} />
         <Route path="messages"     element={<AdminMessages />} />
+        <Route path="institutions" element={<PrivateRoute roles={['manager']}><AdminInstitutions /></PrivateRoute>} />
+        <Route path="suppliers"    element={<PrivateRoute roles={['manager', 'team_leader']}><AdminSuppliers /></PrivateRoute>} />
         <Route path="payroll"      element={<PrivateRoute roles={['manager']}><AdminPayroll /></PrivateRoute>} />
         <Route path="register"     element={<PrivateRoute roles={['manager']}><Register /></PrivateRoute>} />
         <Route path="credentials"  element={<PrivateRoute roles={['manager']}><AdminCredentials /></PrivateRoute>} />

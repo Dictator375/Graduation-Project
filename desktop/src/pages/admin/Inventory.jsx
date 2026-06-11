@@ -1,20 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { getInventory, refillInventory, updateFuelPrice, getRefillHistory } from '../../utils/api.js';
+import { getInventory, refillInventory, updateFuelPrice, getRefillHistory, getSuppliers } from '../../utils/api.js';
 
 export default function AdminInventory() {
   const { t, lang } = useAuth();
   const [inventory, setInventory] = useState([]);
   const [history,   setHistory]   = useState([]);
-  const [refill,    setRefill]    = useState({ fuel_type_id:'', quantity_liters:'', cost_per_liter:'', supplier:'', demand_date:'', tax_rate:'0.19' });
+  const [suppliers, setSuppliers] = useState([]);
+  const [refill,    setRefill]    = useState({ fuel_type_id:'', quantity_liters:'', cost_per_liter:'', supplier_id:'', supplier:'', demand_date:'', tax_rate:'0.19' });
   const [priceEdit, setPriceEdit] = useState({});
   const [msg,       setMsg]       = useState('');
   const [filterPeriod, setFilterPeriod] = useState('all');
   const [loading,   setLoading]   = useState(true);
 
   function load() {
-    Promise.all([getInventory(), getRefillHistory()]).then(([inv, hist]) => {
-      setInventory(inv.data); setHistory(hist.data);
+    Promise.all([getInventory(), getRefillHistory(), getSuppliers()]).then(([inv, hist, sups]) => {
+      setInventory(inv.data); setHistory(hist.data); setSuppliers(sups.data || []);
     }).finally(() => setLoading(false));
   }
   useEffect(load, []);
@@ -27,7 +28,7 @@ export default function AdminInventory() {
     try {
       await refillInventory(refill);
       setMsg('تم الملء بنجاح ✓');
-      setRefill({ fuel_type_id:'', quantity_liters:'', cost_per_liter:'', supplier:'', demand_date:'', tax_rate:'0.19' });
+      setRefill({ fuel_type_id:'', quantity_liters:'', cost_per_liter:'', supplier_id:'', supplier:'', demand_date:'', tax_rate:'0.19' });
       load();
       setTimeout(() => setMsg(''), 2000);
     } catch (err) {
@@ -222,9 +223,15 @@ export default function AdminInventory() {
               </div>
             )}
             <div className="form-group">
-              <label>المورّد</label>
-              <input className="input" value={refill.supplier}
-                onChange={e=>setRefill(r=>({...r,supplier:e.target.value}))} />
+              <label>{t.selectSupplier || 'المورّد'}</label>
+              <select className="select" value={refill.supplier_id} onChange={e => {
+                const sid = e.target.value;
+                const sup = suppliers.find(s => String(s.id) === String(sid));
+                setRefill(r => ({ ...r, supplier_id: sid, supplier: sup ? sup.name : '' }));
+              }}>
+                <option value="">— اختر المورد —</option>
+                {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
             </div>
             <div className="form-group">
               <label>{t.demandDate}</label>

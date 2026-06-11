@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS refill_history (
     tax_rate        REAL    DEFAULT 0.19,
     tax_amount      REAL,
     total_cost      REAL,
+    supplier_id     INTEGER REFERENCES suppliers(id),
     supplier        TEXT,
     demand_date     DATETIME,
     recorded_by     INTEGER REFERENCES users(id),
@@ -102,6 +103,19 @@ CREATE TABLE IF NOT EXISTS institutions (
     phone          TEXT,
     address        TEXT,
     tax_number     TEXT,
+    notes          TEXT,
+    is_active      INTEGER DEFAULT 1,
+    created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ── Suppliers (fuel providers) ───────────────────────────────
+CREATE TABLE IF NOT EXISTS suppliers (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    name           TEXT NOT NULL,
+    contact_person TEXT,
+    phone          TEXT,
+    email          TEXT,
+    address        TEXT,
     notes          TEXT,
     is_active      INTEGER DEFAULT 1,
     created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -170,6 +184,23 @@ CREATE TABLE IF NOT EXISTS payroll_dates (
     created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ── Payroll records (calculated salaries) ────────────────────
+CREATE TABLE IF NOT EXISTS payroll_records (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    month           TEXT    NOT NULL,           -- 'YYYY-MM' format
+    base_salary     REAL    NOT NULL,
+    daily_rate      REAL    NOT NULL,           -- base_salary / 30
+    total_days      INTEGER NOT NULL,           -- working days in month (or since hire)
+    days_worked     INTEGER NOT NULL,           -- present + late + excused
+    days_absent     INTEGER NOT NULL,
+    deduction       REAL    NOT NULL,           -- daily_rate × days_absent
+    net_salary      REAL    NOT NULL,           -- daily_rate × days_worked
+    is_prorated     INTEGER DEFAULT 0,          -- 1 if hired mid-month
+    generated_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, month)
+);
+
 -- ── Indexes ──────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_sales_worker     ON sales(worker_id);
 CREATE INDEX IF NOT EXISTS idx_sales_date       ON sales(shift_date);
@@ -177,6 +208,8 @@ CREATE INDEX IF NOT EXISTS idx_attendance_user  ON attendance(user_id);
 CREATE INDEX IF NOT EXISTS idx_attendance_date  ON attendance(date);
 CREATE INDEX IF NOT EXISTS idx_messages_recv    ON messages(receiver_id);
 CREATE INDEX IF NOT EXISTS idx_messages_sender  ON messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_payroll_user     ON payroll_records(user_id);
+CREATE INDEX IF NOT EXISTS idx_payroll_month    ON payroll_records(month);
 
 -- ── Pumps ──────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS pumps (

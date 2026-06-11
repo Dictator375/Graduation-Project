@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { getSales, getPayroll, getInventory } from '../../utils/api.js';
+import { getSales, getMyPayroll, getInventory } from '../../utils/api.js';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 function fmt(n) { return Number(n || 0).toLocaleString('ar-DZ'); }
@@ -15,25 +15,25 @@ const PAYMENT_COLOR = {
 export default function WorkerDashboard() {
   const { user, t, isRTL } = useAuth();
   const [sales,     setSales]     = useState([]);
-  const [payDates,  setPayDates]  = useState([]);
+  const [payroll,   setPayroll]   = useState(null);
   const [inventory, setInventory] = useState([]);
   const [loading,   setLoading]   = useState(true);
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
+    const month = today.slice(0, 7);
     Promise.all([
       getSales({ date: today, limit: 20 }),
-      getPayroll(),
+      getMyPayroll(month),
       getInventory(),
     ]).then(([s, p, inv]) => {
       setSales(s.data || []);
-      setPayDates(p.data || []);
+      setPayroll(p.data || null);
       setInventory(inv.data || []);
     }).finally(() => setLoading(false));
   }, []);
 
   const todayTotal = sales.reduce((s, r) => s + r.total_amount, 0);
-  const nextPay    = payDates[0];
   const hour       = new Date().getHours();
   const shiftName  = hour >= 8 && hour < 14
     ? t.morningShift : hour >= 14 && hour < 20
@@ -55,15 +55,64 @@ export default function WorkerDashboard() {
           </div>
           <div style={{ fontSize: 12, color: 'var(--accent)', marginTop: 3 }}>{shiftName}</div>
         </div>
-        {nextPay && (
-          <div style={{ textAlign: 'left' }}>
+        {payroll && payroll.next_pay_date && (
+          <div style={{ textAlign: isRTL ? 'left' : 'right' }}>
             <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{t.nextPayDate}</div>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginTop: 2 }}>
-              {new Date(nextPay.pay_date).toLocaleDateString('ar-DZ', { month: 'long', day: 'numeric' })}
+              {new Date(payroll.next_pay_date).toLocaleDateString(isRTL ? 'ar-DZ' : 'fr-FR', { month: 'long', day: 'numeric' })}
             </div>
           </div>
         )}
       </div>
+
+      {/* Salary Widget */}
+      {payroll && (payroll.record || payroll.estimate) && (
+        <div className="card" style={{ marginBottom: 20, padding: 0, overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                  {payroll.record ? t.netSalary : t.estimatedSalary} ({t.monthLabel} {payroll.month})
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginTop: 4 }}>
+                  {fmt(payroll.record ? payroll.record.net_salary : payroll.estimate.net_salary)} دج
+                </div>
+              </div>
+              <div style={{ textAlign: isRTL ? 'left' : 'right' }}>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t.baseSalary}: {fmt(payroll.record ? payroll.record.base_salary : payroll.estimate.base_salary)} دج</div>
+                <div style={{ fontSize: 11, color: 'var(--danger)', marginTop: 2 }}>
+                  {t.deductionLabel}: -{fmt(payroll.record ? payroll.record.deduction : payroll.estimate.deduction)} دج
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div style={{ padding: '16px 20px' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>{t.attendanceSummary}</div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              {(() => {
+                const data = payroll.record || payroll.estimate;
+                return (
+                  <>
+                    <div style={{ flex: 1, padding: 12, background: 'var(--bg-hover)', borderRadius: 8, textAlign: 'center' }}>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--success)' }}>{data.days_worked}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{t.daysWorked}</div>
+                    </div>
+                    <div style={{ flex: 1, padding: 12, background: 'var(--bg-hover)', borderRadius: 8, textAlign: 'center' }}>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--danger)' }}>{data.days_absent}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{t.daysAbsent}</div>
+                    </div>
+                    <div style={{ flex: 1, padding: 12, background: 'var(--bg-hover)', borderRadius: 8, textAlign: 'center' }}>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{data.total_days}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{t.daysTotal}</div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="stats-grid" style={{ gridTemplateColumns: '1fr 1fr 1fr', marginBottom: 20 }}>

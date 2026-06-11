@@ -7,6 +7,7 @@ const MANAGER_NAV = [
   { id: 'reports',      to: '/admin/sales',         icon: '📈' },
   { sectionKey: 'operations' },
   { id: 'inventory',    to: '/admin/inventory',     icon: '⛽' },
+  { id: 'suppliers',    to: '/admin/suppliers',     icon: '🚛' },
   { id: 'pumps',        to: '/admin/pumps',         icon: '🚰' },
   { id: 'shifts',       to: '/admin/shifts',        icon: '📅' },
   { id: 'employees',    to: '/admin/employees',     icon: '👥' },

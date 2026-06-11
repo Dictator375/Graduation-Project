@@ -28,7 +28,7 @@ const ar = {
   invoices:       'الفواتير',
   institutions:   'المؤسسات',
   messages:       'الرسائل',
-  payroll:        'مواعيد الأجور',
+  payroll:        'الرواتب والحضور',
   settings:       'الإعدادات',
 
   // Fuel
@@ -113,6 +113,29 @@ const ar = {
   // Payroll
   payDate:        'تاريخ صرف الأجر',
   nextPayDate:    'موعد الراتب القادم',
+
+  // Payroll Report
+  payrollReport:  'تقرير الرواتب',
+  generatePayroll:'حساب الرواتب',
+  baseSalary:     'الراتب الأساسي',
+  dailyRate:      'الأجر اليومي',
+  daysWorked:     'أيام العمل',
+  daysAbsent:     'أيام الغياب',
+  deductionLabel: 'الخصم',
+  netSalary:      'الصافي',
+  prorated:       'نسبي',
+  attendanceReport:'تقرير الحضور',
+  estimatedSalary:'الراتب المتوقع',
+  attendanceSummary:'ملخص الحضور',
+  payrollGenerated:'تم حساب الرواتب',
+  noPayrollYet:   'لم يتم حساب الرواتب بعد',
+  generateFirst:  'اضغط على "حساب الرواتب" لبدء الحساب',
+  totalDeductions:'إجمالي الخصومات',
+  totalNetPay:    'إجمالي الصافي',
+  workerCount:    'عدد العمال',
+  workerDetail:   'تفاصيل العامل',
+  monthLabel:     'الشهر',
+  daysTotal:      'إجمالي الأيام',
 
   // Common
   save:           'حفظ',

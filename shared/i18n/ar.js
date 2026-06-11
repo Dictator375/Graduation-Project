@@ -28,7 +28,8 @@ const ar = {
   invoices:       'الفواتير',
   institutions:   'المؤسسات',
   messages:       'الرسائل',
-  payroll:        'مواعيد الأجور',
+  suppliers:      'الموردون',
+  payroll:        'الرواتب والحضور',
   settings:       'الإعدادات',
 
   // Fuel
@@ -114,6 +115,29 @@ const ar = {
   payDate:        'تاريخ صرف الأجر',
   nextPayDate:    'موعد الراتب القادم',
 
+  // Payroll Report
+  payrollReport:  'تقرير الرواتب',
+  generatePayroll:'حساب الرواتب',
+  baseSalary:     'الراتب الأساسي',
+  dailyRate:      'الأجر اليومي',
+  daysWorked:     'أيام العمل',
+  daysAbsent:     'أيام الغياب',
+  deductionLabel: 'الخصم',
+  netSalary:      'الصافي',
+  prorated:       'نسبي',
+  attendanceReport:'تقرير الحضور',
+  estimatedSalary:'الراتب المتوقع',
+  attendanceSummary:'ملخص الحضور',
+  payrollGenerated:'تم حساب الرواتب',
+  noPayrollYet:   'لم يتم حساب الرواتب بعد',
+  generateFirst:  'اضغط على "حساب الرواتب" لبدء الحساب',
+  totalDeductions:'إجمالي الخصومات',
+  totalNetPay:    'إجمالي الصافي',
+  workerCount:    'عدد العمال',
+  workerDetail:   'تفاصيل العامل',
+  monthLabel:     'الشهر',
+  daysTotal:      'إجمالي الأيام',
+
   // Common
   save:           'حفظ',
   cancel:         'إلغاء',
@@ -127,6 +151,19 @@ const ar = {
   confirm:        'تأكيد',
   back:           'رجوع',
   date:           'التاريخ',
+  overview:       'نظرة عامة',
+  operations:     'العمليات',
+  finance:        'المالية',
+  other:          'أخرى',
+
+  // Suppliers
+  addSupplier:    'إضافة مورد',
+  supplierName:   'اسم المورد',
+  contactPerson:  'اسم جهة الاتصال',
+  email:          'البريد الإلكتروني',
+  address:        'العنوان',
+  selectSupplier: 'اختر المورد',
+
   notes:          'ملاحظات',
   actions:        'الإجراءات',
   total:          'الإجمالي',

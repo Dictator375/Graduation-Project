@@ -24,7 +24,7 @@ const fr = {
   invoices:       'Factures',
   institutions:   'Institutions',
   messages:       'Messages',
-  payroll:        'Dates de paie',
+  payroll:        'Paie & Présence',
   settings:       'Paramètres',
 
   fuelType:       'Type de carburant',
@@ -99,6 +99,29 @@ const fr = {
 
   payDate:        'Date de paie',
   nextPayDate:    'Prochaine paie',
+
+  // Payroll Report
+  payrollReport:  'Rapport de paie',
+  generatePayroll:'Calculer la paie',
+  baseSalary:     'Salaire de base',
+  dailyRate:      'Taux journalier',
+  daysWorked:     'Jours travaillés',
+  daysAbsent:     'Jours absents',
+  deductionLabel: 'Déduction',
+  netSalary:      'Salaire net',
+  prorated:       'Proratisé',
+  attendanceReport:'Rapport de présence',
+  estimatedSalary:'Salaire estimé',
+  attendanceSummary:'Résumé de présence',
+  payrollGenerated:'Paie calculée',
+  noPayrollYet:   'Pas encore de paie calculée',
+  generateFirst:  'Cliquez sur "Calculer la paie" pour commencer',
+  totalDeductions:'Total déductions',
+  totalNetPay:    'Total net',
+  workerCount:    "Nombre d'employés",
+  workerDetail:   "Détails de l'employé",
+  monthLabel:     'Mois',
+  daysTotal:      'Total jours',
 
   save:           'Enregistrer',
   cancel:         'Annuler',

@@ -34,7 +34,44 @@ function initDb() {
   
   // Add new feature columns (safe migration)
   try { database.exec('ALTER TABLE refill_history ADD COLUMN demand_date DATETIME'); } catch(e) {}
+  try { database.exec('ALTER TABLE refill_history ADD COLUMN supplier_id INTEGER'); } catch(e) {}
   try { database.exec('ALTER TABLE sales ADD COLUMN voucher_amount REAL'); } catch(e) {}
+
+  // Suppliers table
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS suppliers (
+        id             INTEGER PRIMARY KEY AUTOINCREMENT,
+        name           TEXT NOT NULL,
+        contact_person TEXT,
+        phone          TEXT,
+        email          TEXT,
+        address        TEXT,
+        notes          TEXT,
+        is_active      INTEGER DEFAULT 1,
+        created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Payroll records table (safe migration)
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS payroll_records (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      month           TEXT    NOT NULL,
+      base_salary     REAL    NOT NULL,
+      daily_rate      REAL    NOT NULL,
+      total_days      INTEGER NOT NULL,
+      days_worked     INTEGER NOT NULL,
+      days_absent     INTEGER NOT NULL,
+      deduction       REAL    NOT NULL,
+      net_salary      REAL    NOT NULL,
+      is_prorated     INTEGER DEFAULT 0,
+      generated_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, month)
+    )
+  `);
+  try { database.exec('CREATE INDEX IF NOT EXISTS idx_payroll_user ON payroll_records(user_id)'); } catch(e) {}
+  try { database.exec('CREATE INDEX IF NOT EXISTS idx_payroll_month ON payroll_records(month)'); } catch(e) {}
 
   // Seed teams
   const teamCount = database.prepare('SELECT COUNT(*) as c FROM teams').get();

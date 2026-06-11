@@ -48,6 +48,12 @@ export const getEmployeeRanking = (params)    => api.get('/sales/employee-rankin
 export const getCreditSales   = ()            => api.get('/sales/credits');
 export const markCreditPaid   = (id)          => api.put(`/sales/${id}/pay`);
 
+// ── Payroll ───────────────────────────────────────────────────
+export const getPayrollReport = (month)       => api.get('/payroll', { params: { month } });
+export const generatePayroll  = (month)       => api.post('/payroll/generate', { month });
+export const getMyPayroll     = (month)       => api.get('/payroll/my', { params: { month } });
+export const getPayrollDetail = (userId, month) => api.get(`/payroll/report/${userId}`, { params: { month } });
+
 // ── Pumps ─────────────────────────────────────────────────────
 export const getPumps         = ()            => api.get('/pumps');
 export const createPump       = (data)        => api.post('/pumps', data);
@@ -92,9 +98,11 @@ export const createInstitution= (data)        => api.post('/institutions', data)
 export const updateInstitution= (id, data)    => api.put(`/institutions/${id}`, data);
 export const deleteInstitution= (id)          => api.delete(`/institutions/${id}`);
 
-// ── Payroll ───────────────────────────────────────────────────
-export const getPayroll       = ()            => api.get('/payroll');
-export const createPayroll    = (data)        => api.post('/payroll', data);
-export const deletePayroll    = (id)          => api.delete(`/payroll/${id}`);
+// ── Suppliers ─────────────────────────────────────────────────
+export const getSuppliers     = ()            => api.get('/suppliers');
+export const createSupplier   = (data)        => api.post('/suppliers', data);
+export const updateSupplier   = (id, data)    => api.put(`/suppliers/${id}`, data);
+export const deleteSupplier   = (id)          => api.delete(`/suppliers/${id}`);
+
 
 export default api;
