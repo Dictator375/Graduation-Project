@@ -18,7 +18,7 @@ export default function WorkerSales({ navigate }) {
    const PAYMENTS = [
       { value: 'cash',    label: t.cash,    icon: '💵' },
       { value: 'card',    label: t.card,    icon: '💳' },
-      { value: 'loyalty', label: t.loyalty,  icon: '⭐' },
+      { value: 'Purchase voucher', label: t.loyalty,  icon: '🎟️' },
       { value: 'credit',  label: t.credit,   icon: '🏢' },
    ];
   const [fuelTypes,    setFuelTypes]    = useState([]);
