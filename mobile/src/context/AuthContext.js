@@ -47,7 +47,7 @@ const ar = {
   finance:'المالية', other:'أخرى', operationsCount:'عملية',
   managerDashboard:'لوحة تحكم المدير', teamLeaderDashboard:'لوحة تحكم رئيس الفريق',
   institutions:'المؤسسات', credits:'الديون غير المسددة', invoices:'الفواتير',
-  reports:'التقارير', refillNow:'تسجيل ملء', manager:'مدير المحطة',
+  reports:'التقارير', refillNow:'تسجيل ملء', manager:'مدير المحطة', suppliers:'المورّدون',
   // Login
   errorTitle:'خطأ', enterCredentials:'أدخل اسم المستخدم وكلمة المرور',
   loginError:'خطأ في تسجيل الدخول', checkCredentials:'تحقق من المعلومات المدخلة',
@@ -169,7 +169,7 @@ const fr = {
   finance:'Finances', other:'Autres', operationsCount:'opération(s)',
   managerDashboard:'Tableau de bord Directeur', teamLeaderDashboard:"Tableau de bord Chef d'équipe",
   institutions:'Institutions', credits:'Crédits impayés', invoices:'Factures',
-  reports:'Rapports', refillNow:'Enregistrer ravitaillement', manager:'Directeur de station',
+  reports:'Rapports', refillNow:'Enregistrer ravitaillement', manager:'Directeur de station', suppliers:'Fournisseurs',
   // Login
   errorTitle:'Erreur', enterCredentials:"Entrez le nom d'utilisateur et le mot de passe",
   loginError:'Erreur de connexion', checkCredentials:'Vérifiez les informations saisies',

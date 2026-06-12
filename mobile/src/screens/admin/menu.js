@@ -9,7 +9,6 @@ import { STATUS_BAR_HEIGHT, rs, rp } from '../../utils/layout';
 
 const { width, height } = Dimensions.get('window');
 
-// Items visible for manager
 const MANAGER_ITEMS = [
   { icon: '📈', key: 'reports',      screen: 'reports',      color: '#4A90E2', gradient: '#1e3a5f' },
   { icon: '👥', key: 'employees',    screen: 'employees',    color: '#9B59B6', gradient: '#3d1f5c' },
@@ -19,6 +18,7 @@ const MANAGER_ITEMS = [
   { icon: '🧾', key: 'invoices',     screen: 'invoices',     color: '#8E44AD', gradient: '#3b1a52' },
   { icon: '💳', key: 'credits',      screen: 'credits',      color: '#E74C3C', gradient: '#5c1a16' },
   { icon: '🏢', key: 'institutions', screen: 'institutions', color: '#2ECC71', gradient: '#0f4a25' },
+  { icon: '🚚', key: 'suppliers',    screen: 'suppliers',    color: '#D35400', gradient: '#5c2200' },
   { icon: '💬', key: 'messages',     screen: 'messages',     color: '#1ABC9C', gradient: '#0a3d30' },
   { icon: '💰', key: 'payroll',      screen: 'payroll',      color: '#F39C12', gradient: '#5c3c0a' },
 ];

@@ -5,165 +5,152 @@ import {
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { getThemeColors } from '../../utils/theme';
-import { getPayroll, createPayroll, deletePayroll } from '../../utils/api';
+import { getPayrollReport, generatePayroll } from '../../utils/api';
 import { STATUS_BAR_HEIGHT, rs, rp } from '../../utils/layout';
 import { ScreenHeader } from '../../utils/components';
+
+function fmt(n) { return Number(n || 0).toLocaleString('ar-DZ'); }
 
 export default function AdminPayroll({ goBack }) {
    const { t, lang, theme } = useAuth();
    const c = getThemeColors(theme || 'dark');
    const s = getStyles(c);
-   const [dates, setDates] = useState([]);
+
+   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+   const [records, setRecords] = useState([]);
+   const [summary, setSummary] = useState({});
    const [loading, setLoading] = useState(true);
-   const [form, setForm] = useState({ pay_date: '', description: '' });
-   const [saving, setSaving] = useState(false);
+   const [generating, setGenerating] = useState(false);
 
    function load() {
-      getPayroll().then(r => setDates(r.data || [])).catch(() => {}).finally(() => setLoading(false));
-   }
-   useEffect(() => { load(); }, []);
-
-   async function handleAdd() {
-      if (!form.pay_date) { Alert.alert(t.errorTitle, t.enterPayDate); return; }
-      setSaving(true);
-      await createPayroll(form).catch(() => {});
-      setForm({ pay_date: '', description: '' });
-      setSaving(false);
-      load();
-   }
-
-   async function handleDelete(id) {
-      Alert.alert(t.confirmation, t.deletePayDateConfirm, [
-         { text: t.cancel, style: 'cancel' },
-         { text: t.delete, style: 'destructive', onPress: async () => {
-            await deletePayroll(id).catch(() => {});
-            load();
-         }},
-      ]);
+      setLoading(true);
+      getPayrollReport(month).then(res => {
+         if (res.data && res.data.records) {
+            setRecords(res.data.records);
+            setSummary(res.data.summary);
+         } else {
+            setRecords([]);
+            setSummary({});
+         }
+      }).catch(e => {
+         console.error(e);
+      }).finally(() => setLoading(false));
    }
 
-   const today = new Date().toISOString().split('T')[0];
-   const upcoming = dates.filter(d => d.pay_date >= today);
-   const past = dates.filter(d => d.pay_date < today);
+   useEffect(() => { load(); }, [month]);
+
+   async function handleGenerate() {
+      Alert.alert(
+         t.confirmation || 'تأكيد',
+         t.generatePayrollConfirm || 'هل أنت متأكد من حساب الرواتب لهذا الشهر؟ سيتم تحديث السجلات.',
+         [
+            { text: t.cancel || 'إلغاء', style: 'cancel' },
+            {
+               text: t.confirm || 'تأكيد',
+               style: 'destructive',
+               onPress: async () => {
+                  setGenerating(true);
+                  try {
+                     await generatePayroll(month);
+                     Alert.alert('✓', t.payrollGenerated || 'تم حساب الرواتب بنجاح');
+                     load();
+                  } catch (e) {
+                     Alert.alert(t.errorTitle || 'خطأ', t.error || 'حدث خطأ');
+                  }
+                  setGenerating(false);
+               }
+            }
+         ]
+      );
+   }
 
    return (
       <View style={s.screen}>
          <ScreenHeader
-            title={t.payroll}
+            title={t.payroll || 'الرواتب'}
             onBack={goBack}
             lang={lang}
             theme={theme}
             c={c}
          />
 
-         {loading
-            ? <View style={s.center}><ActivityIndicator color="#E85D24" /></View>
-            : (
-               <ScrollView contentContainerStyle={{ padding: rp(16), paddingBottom: rp(40) }}>
+         <View style={{ padding: rp(16), borderBottomWidth: 1, borderColor: c.border }}>
+            <Text style={{ color: c.sub, marginBottom: 5, textAlign: 'right' }}>{t.month || 'الشهر'}</Text>
+            <TextInput
+               style={s.input}
+               value={month}
+               onChangeText={setMonth}
+               placeholder="YYYY-MM"
+               placeholderTextColor={c.muted}
+               textAlign="right"
+            />
+         </View>
 
-                  {/* Add form */}
-                  <Text style={s.section}>{t.addPayDate}</Text>
-                  <View style={s.card}>
-                     <Text style={s.label}>{t.date}</Text>
-                      <TextInput
-                         style={s.input}
-                         value={form.pay_date}
-                         onChangeText={v => setForm(f => ({ ...f, pay_date: v }))}
-                         placeholder={lang === 'fr' ? 'AAAA-MM-JJ exemple: 2026-06-30' : 'YYYY-MM-DD مثال: 2026-06-30'}
-                         placeholderTextColor={c.muted}
-                         textAlign="right"
-                         keyboardType="numeric"
-                      />
-                     <Text style={s.label}>{t.payDateDesc}</Text>
-                      <TextInput
-                         style={s.input}
-                         value={form.description}
-                         onChangeText={v => setForm(f => ({ ...f, description: v }))}
-                         placeholder={lang === 'fr' ? 'Ex: Salaires juin 2026' : 'مثال: رواتب شهر جوان 2026'}
-                         placeholderTextColor={c.muted}
-                         textAlign="right"
-                      />
-                     <TouchableOpacity style={s.addBtn} onPress={handleAdd} disabled={saving}>
-                        <Text style={s.addBtnText}>{saving ? t.saving : t.addPayDateBtn}</Text>
-                     </TouchableOpacity>
+         {loading ? (
+            <View style={s.center}><ActivityIndicator color="#E85D24" /></View>
+         ) : (
+            <ScrollView contentContainerStyle={{ padding: rp(16), paddingBottom: rp(80) }}>
+               {/* Summary */}
+               {summary && summary.total_net !== undefined && (
+                  <View style={s.summaryCard}>
+                     <Text style={s.section}>{t.summary || 'الملخص'}</Text>
+                     <View style={s.row}>
+                        <Text style={s.label}>{t.totalBase || 'إجمالي الراتب الأساسي'}</Text>
+                        <Text style={s.val}>{fmt(summary.total_base)} دج</Text>
+                     </View>
+                     <View style={s.row}>
+                        <Text style={s.label}>{t.totalDeduction || 'إجمالي الخصومات'}</Text>
+                        <Text style={s.val}>{fmt(summary.total_deduction)} دج</Text>
+                     </View>
+                     <View style={s.row}>
+                        <Text style={[s.label, { color: '#1D9E75' }]}>{t.totalNet || 'إجمالي الصافي'}</Text>
+                        <Text style={[s.val, { color: '#1D9E75', fontWeight: 'bold' }]}>{fmt(summary.total_net)} دج</Text>
+                     </View>
                   </View>
+               )}
 
-                  {/* Upcoming */}
-                  <Text style={s.section}>{t.upcoming} ({upcoming.length})</Text>
-                  {upcoming.length === 0
-                     ? <Text style={s.empty}>{t.noUpcoming}</Text>
-                     : upcoming.map(d => (
-                        <View key={d.id} style={s.dateCard}>
-                           <View style={s.dateLeft}>
-                              <Text style={s.dateIcon}></Text>
-                           </View>
-                           <View style={{ flex: 1 }}>
-                              <Text style={s.dateValue}>
-                                 {new Date(d.pay_date).toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}
-                              </Text>
-                              {d.description && <Text style={s.dateDesc}>{d.description}</Text>}
-                              <Text style={s.daysLeft}>
-                                 {Math.ceil((new Date(d.pay_date) - new Date()) / 86400000)} {t.daysRemaining}
-                              </Text>
-                           </View>
-                           <TouchableOpacity style={s.deleteBtn} onPress={() => handleDelete(d.id)}>
-                              <Text style={s.deleteBtnText}>✕</Text>
-                           </TouchableOpacity>
+               {records.length === 0 ? (
+                  <Text style={s.empty}>{t.noData || 'لا توجد رواتب لهذا الشهر'}</Text>
+               ) : (
+                  records.map(rec => (
+                     <View key={rec.id} style={s.card}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                           <Text style={{ color: '#1D9E75', fontWeight: 'bold' }}>{fmt(rec.net_salary)} دج</Text>
+                           <Text style={{ color: c.text, fontSize: rs(14), fontWeight: 'bold' }}>
+                              {lang === 'fr' ? (rec.full_name_fr || rec.full_name) : (rec.full_name_ar || rec.full_name)}
+                           </Text>
                         </View>
-                     ))
-                  }
+                        <Text style={s.subText}>{t.baseSalary || 'الراتب الأساسي'}: {fmt(rec.base_salary)} دج</Text>
+                        {rec.deduction > 0 && <Text style={[s.subText, { color: '#E24B4A' }]}>{t.deduction || 'الخصم'}: {fmt(rec.deduction)} دج</Text>}
+                     </View>
+                  ))
+               )}
+            </ScrollView>
+         )}
 
-                  {/* Past */}
-                  {past.length > 0 && (
-                     <>
-                        <Text style={[s.section, { color: c.muted, marginTop: rp(20) }]}>
-                           {t.past} ({past.length})
-                        </Text>
-                        {past.slice(-5).reverse().map(d => (
-                           <View key={d.id} style={[s.dateCard, { opacity: 0.5 }]}>
-                              <View style={s.dateLeft}>
-                                 <Text style={s.dateIcon}>✓</Text>
-                              </View>
-                              <View style={{ flex: 1 }}>
-                                 <Text style={s.dateValue}>
-                                    {new Date(d.pay_date).toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}
-                                 </Text>
-                                 {d.description && <Text style={s.dateDesc}>{d.description}</Text>}
-                              </View>
-                              <TouchableOpacity style={s.deleteBtn} onPress={() => handleDelete(d.id)}>
-                                 <Text style={s.deleteBtnText}>✕</Text>
-                              </TouchableOpacity>
-                           </View>
-                        ))}
-                     </>
-                  )}
-               </ScrollView>
-            )
-         }
+         {/* Generate button */}
+         <View style={s.saveWrap}>
+            <TouchableOpacity style={s.saveBtn} onPress={handleGenerate} disabled={generating || loading}>
+               <Text style={s.saveBtnText}>{generating ? (t.saving || 'جاري الحفظ...') : (t.generate || 'حساب الرواتب')}</Text>
+            </TouchableOpacity>
+         </View>
       </View>
    );
 }
 
 const getStyles = (c) => StyleSheet.create({
    screen: { flex: 1, backgroundColor: c.bg },
-   safeTop: { height: STATUS_BAR_HEIGHT, backgroundColor: c.card },
-   header: { backgroundColor: c.card, padding: rp(14), flexDirection: 'row', alignItems: 'center', gap: rp(12), borderBottomWidth: 1, borderBottomColor: c.border },
-   back: { color: '#E85D24', fontSize: rs(16), fontWeight: '600' },
-   title: { color: c.text, fontSize: rs(16), fontWeight: '700', flex: 1, textAlign: 'right' },
    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+   input: { backgroundColor: c.card, color: c.text, borderRadius: 8, padding: rp(12), borderWidth: 1, borderColor: c.border, textAlign: 'right' },
+   summaryCard: { backgroundColor: c.card, borderRadius: 12, padding: rp(16), marginBottom: rp(16), borderWidth: 1, borderColor: c.border },
    section: { color: c.text, fontSize: rs(15), fontWeight: '700', marginBottom: rp(10), textAlign: 'right' },
-   card: { backgroundColor: c.card, borderRadius: 12, padding: rp(16), marginBottom: rp(16), borderWidth: 1, borderColor: c.border },
-   label: { color: c.sub, fontSize: rs(12), textAlign: 'right', marginBottom: rp(6), marginTop: rp(10) },
-   input: { backgroundColor: c.bg, borderRadius: 8, padding: rp(12), color: c.text, fontSize: rs(13), borderWidth: 1, borderColor: c.border },
-   addBtn: { backgroundColor: '#E85D24', borderRadius: 10, padding: rp(14), alignItems: 'center', marginTop: rp(14) },
-   addBtnText: { color: '#fff', fontSize: rs(14), fontWeight: '700' },
+   row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: rp(6) },
+   label: { color: c.sub, fontSize: rs(13) },
+   val: { color: c.text, fontSize: rs(13), fontWeight: '600' },
+   card: { backgroundColor: c.card, borderRadius: 12, padding: rp(14), marginBottom: rp(10), borderWidth: 1, borderColor: c.border },
+   subText: { color: c.sub, fontSize: rs(12), marginBottom: 4, textAlign: 'right' },
    empty: { color: c.muted, textAlign: 'center', padding: rp(20), fontSize: rs(13) },
-   dateCard: { backgroundColor: c.card, borderRadius: 12, padding: rp(14), marginBottom: rp(10), flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: c.border },
-   dateLeft: { width: rp(40), height: rp(40), borderRadius: rp(20), backgroundColor: 'rgba(232,93,36,0.15)', justifyContent: 'center', alignItems: 'center', marginLeft: rp(12) },
-   dateIcon: { fontSize: rs(20) },
-   dateValue: { color: c.text, fontSize: rs(14), fontWeight: '600', textAlign: 'right' },
-   dateDesc: { color: c.sub, fontSize: rs(12), textAlign: 'right', marginTop: 2 },
-   daysLeft: { color: '#E85D24', fontSize: rs(11), textAlign: 'right', marginTop: 4 },
-   deleteBtn: { padding: rp(8) },
-   deleteBtnText:{ color: '#E24B4A', fontSize: rs(16), fontWeight: '700' },
+   saveWrap: { position: 'absolute', bottom: rp(16), left: rp(16), right: rp(16) },
+   saveBtn: { backgroundColor: '#E85D24', borderRadius: 12, padding: rp(16), alignItems: 'center' },
+   saveBtnText: { color: '#fff', fontSize: rs(15), fontWeight: '700' },
 });

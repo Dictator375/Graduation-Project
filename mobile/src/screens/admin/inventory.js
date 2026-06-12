@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { getThemeColors } from '../../utils/theme';
-import { getInventory, refillInventory, updateFuelPrice } from '../../utils/api';
+import { getInventory, refillInventory, updateFuelPrice, getSuppliers } from '../../utils/api';
 import { STATUS_BAR_HEIGHT, rs, rp } from '../../utils/layout';
 import { ScreenHeader } from '../../utils/components';
 
@@ -16,13 +16,21 @@ export default function AdminInventory({ goBack }) {
    const c = getThemeColors(theme || 'dark');
    const s = getStyles(c);
    const [inventory, setInventory] = useState([]);
+   const [suppliers, setSuppliers] = useState([]);
    const [loading, setLoading] = useState(true);
-   const [refillForm, setRefillForm] = useState({ fuel_type_id: '', quantity_liters: '', cost_per_liter: '', supplier: '', demand_date: '', tax_rate: '0.19' });
+   const [refillForm, setRefillForm] = useState({ fuel_type_id: '', quantity_liters: '', cost_per_liter: '', supplier_id: null, supplier: '', demand_date: '', tax_rate: '0.19' });
    const [priceEdit, setPriceEdit] = useState({});
    const [saving, setSaving] = useState(false);
 
    function load() {
-      getInventory().then(r => setInventory(r.data || [])).catch(() => {}).finally(() => setLoading(false));
+      setLoading(true);
+      Promise.all([getInventory(), getSuppliers()])
+         .then(([inv, sup]) => {
+            setInventory(inv.data || []);
+            setSuppliers(sup.data || []);
+         })
+         .catch(() => {})
+         .finally(() => setLoading(false));
    }
    useEffect(() => { load(); }, []);
 
@@ -165,10 +173,26 @@ export default function AdminInventory({ goBack }) {
                         );
                      })() : null}
 
-                     <Text style={s.label}>{t.supplier}</Text>
+                     <Text style={s.label}>{t.supplier || 'المورد'}</Text>
+                     {suppliers.length > 0 && (
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: rp(8) }} contentContainerStyle={{ gap: rp(8) }}>
+                           {suppliers.map(sup => (
+                              <TouchableOpacity key={sup.id}
+                                 style={[s.fuelBtn, refillForm.supplier_id === sup.id && s.fuelBtnActive, { minWidth: rp(80) }]}
+                                 onPress={() => setRefillForm(f => ({ ...f, supplier_id: sup.id, supplier: sup.name }))}>
+                                 <Text style={[s.fuelBtnText, refillForm.supplier_id === sup.id && { color: '#fff' }]}>{sup.name}</Text>
+                              </TouchableOpacity>
+                           ))}
+                           <TouchableOpacity
+                              style={[s.fuelBtn, refillForm.supplier_id === null && s.fuelBtnActive, { minWidth: rp(80) }]}
+                              onPress={() => setRefillForm(f => ({ ...f, supplier_id: null, supplier: '' }))}>
+                              <Text style={[s.fuelBtnText, refillForm.supplier_id === null && { color: '#fff' }]}>{t.other || 'آخر'}</Text>
+                           </TouchableOpacity>
+                        </ScrollView>
+                     )}
                      <TextInput style={s.input} value={refillForm.supplier} 
-                        onChangeText={v => setRefillForm(f => ({ ...f, supplier: v }))}
-                        placeholder={t.supplierName} placeholderTextColor={c.muted}  textAlign="right" />
+                        onChangeText={v => setRefillForm(f => ({ ...f, supplier: v, supplier_id: null }))}
+                        placeholder={t.supplierName || 'اسم المورد (اختياري)'} placeholderTextColor={c.muted} textAlign="right" />
                      
                      <Text style={s.label}>{t.demandDate}</Text>
                      <TextInput style={s.input} value={refillForm.demand_date}

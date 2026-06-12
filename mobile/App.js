@@ -16,6 +16,7 @@ import AdminReports from './src/screens/admin/reports';
 import AdminInvoices from './src/screens/admin/invoices';
 import AdminCredits from './src/screens/admin/credits';
 import AdminInstitutions from './src/screens/admin/institutions';
+import AdminSuppliers from './src/screens/admin/suppliers';
 import AdminPayroll from './src/screens/admin/payroll';
 import AdminMessages from './src/screens/admin/Messages';
 
@@ -88,6 +89,7 @@ function Navigator() {
       case 'invoices':     Component = <AdminInvoices {...nav} />; break;
       case 'credits':      Component = <AdminCredits {...nav} />; break;
       case 'institutions': Component = <AdminInstitutions {...nav} />; break;
+      case 'suppliers':    Component = <AdminSuppliers {...nav} />; break;
       case 'payroll':
         Component = user?.role !== 'manager' ? <AdminMenu {...nav} /> : <AdminPayroll {...nav} />;
         break;

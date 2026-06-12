@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-// Use your PC's WiFi IP so the phone/emulator can reach the backend
-const API_URL = 'http://192.168.100.10:3001/api';
+// Uncomment the IP address that matches your current network:
+// const API_URL = 'http://192.168.100.10:3001/api'; // Your Home Wi-Fi IP
+const API_URL = 'http://10.29.11.229:3001/api';     // Your Mobile Data IP
+
 const api = axios.create({ baseURL: API_URL, timeout: 10000 });
 
 // Module-level token storage (React Native has no localStorage)
@@ -71,6 +73,13 @@ export const getMyAttendance = (month) => api.get('/shifts/attendance/my', { par
 export const saveAttendance = (records) => api.post('/shifts/attendance', { records });
 export const getShiftTeams = () => api.get('/shifts/teams');
 
+// ── Suppliers ─────────────────────────────────────────────────
+export const getSuppliers = () => api.get('/suppliers');
+export const getSupplier = (id) => api.get(`/suppliers/${id}`);
+export const createSupplier = (data) => api.post('/suppliers', data);
+export const updateSupplier = (id, data) => api.put(`/suppliers/${id}`, data);
+export const deleteSupplier = (id) => api.delete(`/suppliers/${id}`);
+
 // ── Messages ──────────────────────────────────────────────────
 export const getMessages = () => api.get('/messages');
 export const getConversation = (userId) => api.get(`/messages/conversation/${userId}`);
@@ -95,9 +104,12 @@ export const updateInstitution= (id, data) => api.put(`/institutions/${id}`, dat
 export const deleteInstitution= (id) => api.delete(`/institutions/${id}`);
 
 // ── Payroll ───────────────────────────────────────────────────
-export const getPayroll = () => api.get('/payroll');
+export const getPayroll = (month) => api.get('/payroll', { params: { month } });
 export const createPayroll = (data) => api.post('/payroll', data);
 export const deletePayroll = (id) => api.delete(`/payroll/${id}`);
+export const getPayrollReport = (month) => api.get('/payroll', { params: { month } });
+export const generatePayroll = (month) => api.post('/payroll/generate', { month });
+
 // ── Credentials (manager only) ────────────────────────────────
 export const getCredentials = () => api.get('/auth/credentials');
 export const updateCredentials = (id, data) => api.put(`/auth/credentials/${id}`, data);
