@@ -33,13 +33,31 @@ function getWorkerDays(monthStr, hireDate) {
 }
 
 // ──────────────────────────────────────────────────────────────
-// GET /api/payroll?month=YYYY-MM
-// Manager: get payroll report for all workers for a given month
+// GET /api/payroll
+// If ?month=YYYY-MM is provided, returns desktop payroll report (Manager only)
+// If no query, returns payroll_dates (Backward compatibility for mobile app)
 // ──────────────────────────────────────────────────────────────
-router.get('/', auth, rbac('manager'), (req, res) => {
-  const db    = getDb();
-  const month = req.query.month || new Date().toISOString().slice(0, 7);
+router.get('/', auth, (req, res) => {
+  const db = getDb();
+  
+  if (!req.query.month) {
+    // Backward compatibility for old mobile app
+    if (req.user.role === 'manager') {
+      const rows = db.prepare('SELECT * FROM payroll_dates ORDER BY pay_date').all();
+      return res.json(rows);
+    }
+    // Worker: show only the next upcoming pay date
+    const today = new Date().toISOString().split('T')[0];
+    const next  = db.prepare('SELECT * FROM payroll_dates WHERE pay_date >= ? ORDER BY pay_date LIMIT 1').get(today);
+    return res.json(next ? [next] : []);
+  }
 
+  // Desktop App Logic (Requires manager role)
+  if (req.user.role !== 'manager') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  const month = req.query.month;
   const rows = db.prepare(`
     SELECT pr.*, u.full_name, u.full_name_ar, u.role, u.hire_date,
            t.name_ar as team_name
@@ -59,6 +77,29 @@ router.get('/', auth, rbac('manager'), (req, res) => {
   };
 
   res.json({ records: rows, summary, month });
+});
+
+// ──────────────────────────────────────────────────────────────
+// POST /api/payroll (Backward compatibility for mobile app)
+// Manager only
+// ──────────────────────────────────────────────────────────────
+router.post('/', auth, rbac('manager'), (req, res) => {
+  const { pay_date, description } = req.body;
+  if (!pay_date) return res.status(400).json({ error: 'pay_date required' });
+  const db   = getDb();
+  const info = db.prepare('INSERT INTO payroll_dates (pay_date, description, created_by) VALUES (?, ?, ?)')
+                 .run(pay_date, description || null, req.user.id);
+  res.status(201).json({ id: info.lastInsertRowid });
+});
+
+// ──────────────────────────────────────────────────────────────
+// DELETE /api/payroll/:id (Backward compatibility for mobile app)
+// Manager only
+// ──────────────────────────────────────────────────────────────
+router.delete('/:id', auth, rbac('manager'), (req, res) => {
+  const db = getDb();
+  db.prepare('DELETE FROM payroll_dates WHERE id = ?').run(parseInt(req.params.id));
+  res.json({ message: 'Payroll date deleted' });
 });
 
 // ──────────────────────────────────────────────────────────────
